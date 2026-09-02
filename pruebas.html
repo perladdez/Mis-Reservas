@@ -347,7 +347,7 @@
 </head>
 <body>
 
-    <h1>Registro de Reservaciones</h1>
+    <h1>Registro de Reservaciones (<span id="nombreUsuarioTitulo">Cargando...</span>)</h1>
 
     <div class="contenedor-tabla">
         <table id="tablaReservas">
@@ -411,12 +411,44 @@
     var columnaActual = null;
     var filtrosSeleccionados = {};
 
-    var datosIniciales = [
-        ["Andrea", "Escalante", "2026-08-22", "Sábado", "09:00", "Desayuno", "6681234567", "4", "Salón", "Pendiente", "$ 1,200", "Efectivo", "Sin cebolla en el platillo principal", "Silla alta para bebé"],
-        ["Mariana", "Andrade", "2026-08-23", "Domingo", "15:00", "Comida/cena", "6689876543", "2", "P. Grande", "Confirmado", "$ 120", "Tarjeta", "Sin alérgenos de marisco", "Mesa decorada de cumpleaños"]
-    ];
+
+
+
+    // Función auxiliar para detectar el usuario desde la URL o el LocalStorage
+    function obtenerUsuarioActual() {
+        var urlParams = new URLSearchParams(window.location.search);
+        var usuarioUrl = urlParams.get('user') || urlParams.get('usuario');
+        
+        if (usuarioUrl) {
+            localStorage.setItem("usuarioActual", usuarioUrl);
+            return usuarioUrl;
+        }
+
+        var usuarioStorage = localStorage.getItem("usuarioActual");
+        if (usuarioStorage) {
+            return usuarioStorage;
+        }
+
+        // Si la URL contiene una ruta específica con el nombre de usuario (ej. /quijote/ o /perla/)
+        var path = window.location.pathname.toLowerCase();
+        if (path.includes("quijote")) return "quijote";
+        if (path.includes("perla")) return "perla";
+
+        window.location.href = "index.html";
+        return null;
+    }
+
+    function obtenerClaveUsuario() {
+        var usuarioActivo = obtenerUsuarioActual();
+        return usuarioActivo ? "tablaReservasDatos_" + usuarioActivo : null;
+    }
 
     window.onload = function() {
+        var usuarioActivo = obtenerUsuarioActual();
+        if (!usuarioActivo) return;
+
+        document.getElementById("nombreUsuarioTitulo").textContent = usuarioActivo;
+
         generarEncabezados();
         cargarTabla();
 
@@ -484,7 +516,10 @@
     }
 
     function cargarTabla() {
-        var reservas = JSON.parse(localStorage.getItem("tablaReservasDatos")) || datosIniciales;
+        var claveStorage = obtenerClaveUsuario();
+        if (!claveStorage) return;
+
+        var reservas = JSON.parse(localStorage.getItem(claveStorage)) || datosIniciales;
         var tbody = document.getElementById("cuerpoTabla");
         tbody.innerHTML = "";
 
@@ -923,6 +958,9 @@
     }
 
     function guardarTabla(alerta) {
+        var claveStorage = obtenerClaveUsuario();
+        if (!claveStorage) return;
+
         var tbody = document.getElementById("cuerpoTabla");
         var datosGuardar = [];
 
@@ -936,7 +974,7 @@
             datosGuardar.push(filaData);
         }
 
-        localStorage.setItem("tablaReservasDatos", JSON.stringify(datosGuardar));
+        localStorage.setItem(claveStorage, JSON.stringify(datosGuardar));
 
         if (alerta === true) {
             alert("¡Cambios guardados con éxito!");
