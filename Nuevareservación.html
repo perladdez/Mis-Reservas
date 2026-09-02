@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Nueva Reservación</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f5f5f5;
+        }
+
+        form {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 300px;
+        }
+
+        label {
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        input {
+            padding: 8px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            padding: 12px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #333;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #555;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Nueva Reservación</h2>
+
+    <form id="formReserva">
+        <label>Nombre:</label>
+        <input type="text" id="nombre" required>
+
+        <label>Apellido:</label>
+        <input type="text" id="nombre" required>
+
+        <label>Fecha:</label>
+        <input type="date" id="fecha" required>
+
+        <label>Hora:</label>
+        <input type="time" id="hora" required>
+
+        <label>Número de Personas:</label>
+        <input type="number" id="personas" min="1" required>
+
+        <button type="button" onclick="guardarReserva()">Guardar Reservación</button>
+        <button type="button" style="background-color: #777;" onclick="regresar()">Cancelar</button>
+    </form>
+
+    <script>
+    function guardarReserva() {
+        var nombre = document.getElementById("nombre").value;
+        var fecha = document.getElementById("fecha").value;
+        var hora = document.getElementById("hora").value;
+        var personas = document.getElementById("personas").value;
+
+        if (!nombre || !fecha || !hora || !personas) {
+            alert("Por favor llena todos los campos");
+            return;
+        }
+
+        // Obtener reservas guardadas previamente o iniciar arreglo vacío
+        var reservas = JSON.parse(localStorage.getItem("misReservas")) || [];
+
+        // Agregar la nueva reservación
+        reservas.push({
+            nombre: nombre,
+            fecha: fecha,
+            hora: hora,
+            personas: personas
+        });
+
+        // Guardar en el navegador
+        localStorage.setItem("misReservas", JSON.stringify(reservas));
+
+        alert("¡Reservación guardada con éxito!");
+        window.location.href = "tabla_previas.html";
+    }
+
+    function regresar() {
+        window.location.href = "html2.html";
+    }
+    </script>
+
+</body>
+</html>

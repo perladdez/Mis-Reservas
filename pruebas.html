@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Registro de Reservaciones</title>
+    <!-- Librería para convertir HTML a Imagen -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            margin: 0;
+            background-color: #f8f9fa;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .contenedor-tabla {
+            overflow: auto;
+            max-height: 80vh; /* Permite desplazamiento vertical manteniendo el header fijo */
+            background: white;
+            border-radius: 6px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        table {
+            border-collapse: separate; /* Requerido para el correcto funcionamiento de sticky */
+            border-spacing: 0;
+            width: 100%;
+            min-width: 1350px;
+            font-size: 14px;
+        }
+
+        th, td {
+            padding: 8px 10px;
+            border-right: 1px solid #dee2e6;
+            border-bottom: 1px solid #dee2e6;
+            text-align: left;
+            vertical-align: top;
+            background-color: #ffffff;
+        }
+
+        /* ===== CONGELAR PRIMERA FILA (ENCABEZADOS) ===== */
+        th {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background-color: #e9ecef;
+            color: #495057;
+            font-weight: bold;
+            user-select: none;
+            border-top: 1px solid #dee2e6;
+        }
+
+        /* ===== CONGELAR PRIMERAS 3 COLUMNAS ===== */
+        /* Columna 0: Checkbox */
+        th:nth-child(1), td:nth-child(1) {
+            position: sticky;
+            left: 0;
+            width: 30px;
+            min-width: 30px;
+        }
+
+        /* Columna 1: Nombre */
+        th:nth-child(2), td:nth-child(2) {
+            position: sticky;
+            left: 51px; /* 30px + padding/borders */
+            min-width: 120px;
+        }
+
+        /* Columna 2: Apellido */
+        th:nth-child(3), td:nth-child(3) {
+            position: sticky;
+            left: 192px; /* 51px + 120px + padding/borders */
+            min-width: 120px;
+            box-shadow: 2px 0 5px -1px rgba(0,0,0,0.15); /* Sombra divisoria para las columnas congeladas */
+        }
+
+        /* Niveles de superposición (Z-Index) */
+        tbody td:nth-child(1), tbody td:nth-child(2), tbody td:nth-child(3) {
+            z-index: 5;
+        }
+
+        /* La intersección entre la fila congelada y las columnas congeladas requiere el z-index más alto */
+        thead th:nth-child(1), thead th:nth-child(2), thead th:nth-child(3) {
+            z-index: 15;
+            background-color: #d1d5db;
+        }
+
+        .th-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn-filtro {
+            background: #cbd5e1;
+            border: 1px solid #94a3b8;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11px;
+            padding: 2px 5px;
+            margin-left: 5px;
+        }
+
+        .btn-filtro:hover {
+            background: #94a3b8;
+            color: white;
+        }
+
+        .menu-excel {
+            display: none;
+            position: fixed;
+            background-color: #ffffff;
+            border: 1px solid #ccc;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            padding: 12px;
+            z-index: 9999;
+            width: 260px;
+            font-size: 13px;
+            border-radius: 6px;
+        }
+
+        .menu-excel div.opcion-orden {
+            padding: 8px 6px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .menu-excel div.opcion-orden:hover {
+            background-color: #f1f5f9;
+        }
+
+        .lista-checkboxes {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            margin-top: 8px;
+            margin-bottom: 12px;
+            padding: 8px;
+            background: #fafafa;
+            border-radius: 4px;
+        }
+
+        .lista-checkboxes label {
+            display: block;
+            margin-bottom: 6px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .acciones-menu {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+        }
+
+        .acciones-menu button {
+            padding: 6px 14px;
+            font-size: 12px;
+        }
+
+        td[contenteditable="true"]:focus {
+            outline: 2px solid #007bff;
+            background-color: #ffffff;
+        }
+
+        input[type="date"], input[type="time"], select.celda-select {
+            border: none;
+            background: transparent;
+            font-family: inherit;
+            font-size: 14px;
+            width: 100%;
+            cursor: pointer;
+        }
+
+        select.status-select {
+            border: none;
+            background: transparent;
+            font-weight: bold;
+            font-size: 14px;
+            width: 100%;
+            cursor: pointer;
+        }
+
+        .acciones {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 10px 18px;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            font-weight: bold;
+        }
+
+        .btn-agregar { background-color: #28a745; }
+        .btn-eliminar { background-color: #dc3545; }
+        .btn-wa { background-color: #25d366; color: white; }
+        .btn-guardar { background-color: #007bff; }
+        .btn-limpiar { background-color: #ffc107; color: #333; }
+        .btn-regresar { background-color: #333; }
+
+        /* Estilos del Contenedor Oculto para Generar Imagen */
+        #tarjetaVistaPrevia {
+            position: absolute;
+            top: -9999px;
+            left: -9999px;
+            width: 600px;
+            background: #102F27;
+            color: #FFFFFF;
+            padding: 30px;
+            border-radius: 14px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .bloque-tarjeta {
+            background: #185844;
+            padding: 22px;
+            border-radius: 10px;
+            border: 1px solid #78947F;
+        }
+
+        .bloque-tarjeta h2 {
+            margin: 0 0 16px 0;
+            text-align: center;
+            color: #F2EBDD;
+            border-bottom: 2px solid #78947F;
+            padding-bottom: 10px;
+            font-size: 27px;
+        }
+
+        .item-tarjeta {
+            display: flex;
+            justify-content: space-between;
+            padding: 9px 0;
+            border-bottom: 1px dashed #78947F;
+            font-size: 21px;
+        }
+
+        .item-tarjeta:last-child {
+            border-bottom: none;
+        }
+
+        .item-tarjeta span.etiqueta {
+            color: #FFFFFF;
+            font-weight: bold;
+        }
+
+        .item-tarjeta span.valor {
+            font-weight: bold;
+            color: #FFFFFF;
+            text-align: right;
+            white-space: pre-wrap;
+        }
+
+        /* Modal Interactivo */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-box {
+            background: white;
+            padding: 24px;
+            border-radius: 10px;
+            max-width: 380px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-box h3 {
+            margin-top: 0;
+            color: #1e293b;
+            font-size: 18px;
+        }
+
+        .modal-box p {
+            color: #64748b;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .modal-botones {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .btn-opcion {
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            color: white;
+        }
+
+        .btn-equipo { background-color: #0f172a; }
+        .btn-equipo:hover { background-color: #1e293b; }
+
+        .btn-comensal { background-color: #25d366; }
+        .btn-comensal:hover { background-color: #1fa855; }
+
+        .btn-cancelar-modal {
+            background: transparent;
+            border: none;
+            color: #64748b;
+            font-size: 13px;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Registro de Reservaciones</h1>
+
+    <div class="contenedor-tabla">
+        <table id="tablaReservas">
+            <thead>
+                <tr id="encabezadosTabla">
+                    <!-- Encabezados dinámicos -->
+                </tr>
+            </thead>
+            <tbody id="cuerpoTabla">
+            </tbody>
+        </table>
+
+        <!-- Menú Flotante Filtro Excel -->
+        <div id="menuExcel" class="menu-excel">
+            <div class="opcion-orden" onclick="ordenarColumna('ASC')">
+                <span>▲</span> Ordenar de menor a mayor
+            </div>
+            <div class="opcion-orden" onclick="ordenarColumna('DESC')">
+                <span>▼</span> Ordenar de mayor a menor
+            </div>
+            <hr style="margin: 8px 0; border: 0; border-top: 1px solid #eee;">
+            <div style="font-weight: bold; font-size: 11px; color: #666; margin-top: 4px;">SELECCIONAR VALORES:</div>
+            
+            <div class="lista-checkboxes" id="contenedorCheckboxes">
+            </div>
+
+            <div class="acciones-menu">
+                <button type="button" class="btn-guardar" onclick="aplicarFiltrosExcel()">Aplicar</button>
+                <button type="button" class="btn-regresar" onclick="cerrarMenu()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="acciones">
+        <button type="button" class="btn-agregar" onclick="agregarFila()">+ Agregar Fila</button>
+        <button type="button" class="btn-eliminar" onclick="eliminarFilasSeleccionadas()">Eliminar Filas</button>
+        <button type="button" class="btn-wa" onclick="preguntarDestinatarioWA()">📲 Enviar por WhatsApp</button>
+        <button type="button" class="btn-guardar" onclick="guardarTabla(true)">Guardar Cambios</button>
+        <button type="button" class="btn-limpiar" onclick="limpiarFiltros()">Quitar Filtros</button>
+        <button type="button" class="btn-regresar" onclick="regresar()">Volver al menú</button>
+    </div>
+
+    <!-- Oculto: Tarjeta previa para html2canvas -->
+    <div id="tarjetaVistaPrevia"></div>
+
+    <!-- Ventana Modal de Selección -->
+    <div id="modalDestinatario" class="modal-overlay">
+        <div class="modal-box">
+            <h3>¿Para quién es la imagen?</h3>
+            <p>Selecciona una opción para generar el formato correspondiente:</p>
+            <div class="modal-botones">
+                <button type="button" class="btn-opcion btn-equipo" onclick="seleccionarOpcionWA('equipo')">👥 Equipo de trabajo</button>
+                <button type="button" class="btn-opcion btn-comensal" onclick="seleccionarOpcionWA('comensal')">🍽️ Comensal</button>
+            </div>
+            <button type="button" class="btn-cancelar-modal" onclick="cerrarModalDestinatario()">Cancelar</button>
+        </div>
+    </div>
+
+    <script>
+    var columnas = ["", "Nombre", "Apellido", "Fecha", "Día", "Hora", "Menú", "#phone", "#p", "Área", "Status", "Cantidad Anticipo", "Vía Anticipo", "Comentarios para Cocina", "Comentarios para Meseros"];
+    var columnaActual = null;
+    var filtrosSeleccionados = {};
+
+    var datosIniciales = [
+        ["Andrea", "Escalante", "2026-08-22", "Sábado", "09:00", "Desayuno", "6681234567", "4", "Salón", "Pendiente", "$ 1,200", "Efectivo", "Sin cebolla en el platillo principal", "Silla alta para bebé"],
+        ["Mariana", "Andrade", "2026-08-23", "Domingo", "15:00", "Comida/cena", "6689876543", "2", "P. Grande", "Confirmado", "$ 120", "Tarjeta", "Sin alérgenos de marisco", "Mesa decorada de cumpleaños"]
+    ];
+
+    window.onload = function() {
+        generarEncabezados();
+        cargarTabla();
+
+        document.addEventListener("click", function(e) {
+            var menu = document.getElementById("menuExcel");
+            if (menu.style.display === "block" && !menu.contains(e.target) && !e.target.classList.contains("btn-filtro")) {
+                cerrarMenu();
+            }
+        });
+    };
+
+    function capitalizarPrimerLetra(texto) {
+        if (!texto) return "";
+        return texto.charAt(0).toUpperCase() + texto.slice(1);
+    }
+
+    function formatearDineroSinDecimales(valor) {
+        if (!valor) return "";
+        var numeroLimpio = valor.toString().replace(/[^0-9]/g, '');
+        if (numeroLimpio === "") return "";
+        
+        var numero = parseInt(numeroLimpio, 10);
+        return "$ " + numero.toLocaleString('es-MX');
+    }
+
+    function manejarEnter(e, celda) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            this.blur();
+            var siguienteCelda = celda.nextElementSibling;
+            if (siguienteCelda) {
+                var elementoFoco = siguienteCelda.querySelector('input, select') || siguienteCelda;
+                if (elementoFoco) elementoFoco.focus();
+            }
+        }
+    }
+
+    function generarEncabezados() {
+        var tr = document.getElementById("encabezadosTabla");
+        tr.innerHTML = "";
+        columnas.forEach(function(col, idx) {
+            var th = document.createElement("th");
+            
+            if (idx === 0) {
+                th.innerHTML = '<input type="checkbox" onchange="marcarTodasLasFilas(this)">';
+                th.style.textAlign = "center";
+            } else {
+                var div = document.createElement("div");
+                div.className = "th-header";
+                
+                var span = document.createElement("span");
+                span.innerText = col;
+
+                var btn = document.createElement("button");
+                btn.className = "btn-filtro";
+                btn.innerText = "▼";
+                btn.onclick = function(e) { abrirMenuExcel(e, idx); };
+
+                div.appendChild(span);
+                div.appendChild(btn);
+                th.appendChild(div);
+            }
+            tr.appendChild(th);
+        });
+    }
+
+    function cargarTabla() {
+        var reservas = JSON.parse(localStorage.getItem("tablaReservasDatos")) || datosIniciales;
+        var tbody = document.getElementById("cuerpoTabla");
+        tbody.innerHTML = "";
+
+        reservas.forEach(function(filaData) {
+            crearFilaHTML(filaData);
+        });
+    }
+
+    function crearFilaHTML(datos) {
+        var tbody = document.getElementById("cuerpoTabla");
+        var nuevaFila = tbody.insertRow();
+
+        var celdaCheck = nuevaFila.insertCell(0);
+        celdaCheck.innerHTML = '<input type="checkbox" class="chk-fila">';
+        celdaCheck.style.textAlign = "center";
+
+        for (var i = 1; i < 15; i++) {
+            var celda = nuevaFila.insertCell(i);
+            var valor = datos ? datos[i - 1] : "";
+
+            if (i === 3) {
+                celda.innerHTML = '<input type="date" value="' + valor + '" onchange="actualizarDia(this); guardarTabla();">';
+            } else if (i === 4) {
+                celda.innerText = capitalizarPrimerLetra(valor);
+                celda.style.backgroundColor = "#f0f0f0";
+            } else if (i === 5) {
+                celda.innerHTML = '<input type="time" value="' + valor + '" onchange="actualizarMenu(this); guardarTabla();">';
+            } else if (i === 6) {
+                celda.innerText = valor;
+                celda.style.backgroundColor = "#f0f0f0";
+            } else if (i === 9) {
+                var areaVal = valor || "Salón";
+                celda.innerHTML = 
+                    '<select class="celda-select" onchange="guardarTabla();">' +
+                        '<option value="Salón"' + (areaVal === 'Salón' ? ' selected' : '') + '>Salón</option>' +
+                        '<option value="P. Grande"' + (areaVal === 'P. Grande' ? ' selected' : '') + '>P. Grande</option>' +
+                        '<option value="P. Chico 1"' + (areaVal === 'P. Chico 1' ? ' selected' : '') + '>P. Chico 1</option>' +
+                        '<option value="P. Chico 2"' + (areaVal === 'P. Chico 2' ? ' selected' : '') + '>P. Chico 2</option>' +
+                        '<option value="Terraza"' + (areaVal === 'Terraza' ? ' selected' : '') + '>Terraza</option>' +
+                    '</select>';
+            } else if (i === 10) {
+                var statusVal = valor || "Pendiente";
+                celda.style.backgroundColor = obtenerColorStatus(statusVal);
+                celda.innerHTML = 
+                    '<select class="status-select" onchange="cambiarColor(this); guardarTabla();">' +
+                        '<option value="Pendiente"' + (statusVal === 'Pendiente' ? ' selected' : '') + '>Pendiente</option>' +
+                        '<option value="Confirmado"' + (statusVal === 'Confirmado' ? ' selected' : '') + '>Confirmado</option>' +
+                        '<option value="Cancelado"' + (statusVal === 'Cancelado' ? ' selected' : '') + '>Cancelado</option>' +
+                        '<option value="Terminado"' + (statusVal === 'Terminado' ? ' selected' : '') + '>Terminado</option>' +
+                    '</select>';
+            } else if (i === 11) {
+                celda.contentEditable = "true";
+                celda.innerText = formatearDineroSinDecimales(valor);
+                celda.onkeydown = function(e) { manejarEnter(e, celda); };
+                celda.onblur = function() {
+                    this.innerText = formatearDineroSinDecimales(this.innerText);
+                    guardarTabla();
+                };
+            } else if (i === 12) {
+                var viaVal = valor || "Efectivo";
+                celda.innerHTML = 
+                    '<select class="celda-select" onchange="guardarTabla();">' +
+                        '<option value="Efectivo"' + (viaVal === 'Efectivo' ? ' selected' : '') + '>Efectivo</option>' +
+                        '<option value="Tarjeta"' + (viaVal === 'Tarjeta' ? ' selected' : '') + '>Tarjeta</option>' +
+                        '<option value="Transferencia"' + (viaVal === 'Transferencia' ? ' selected' : '') + '>Transferencia</option>' +
+                        '<option value="Otros"' + (viaVal === 'Otros' ? ' selected' : '') + '>Otros</option>' +
+                    '</select>';
+            } else if (i === 13 || i === 14) {
+                celda.contentEditable = "true";
+                celda.innerText = valor || "";
+                celda.onblur = function() { guardarTabla(); };
+            } else {
+                celda.contentEditable = "true";
+                celda.innerText = valor || "";
+                celda.onkeydown = function(e) { manejarEnter(e, celda); };
+                celda.onblur = function() { guardarTabla(); };
+            }
+        }
+    }
+
+    function formatearHora12h(hora24) {
+        if (!hora24) return "-";
+        var partes = hora24.split(":");
+        if (partes.length < 2) return hora24;
+
+        var horas = parseInt(partes[0], 10);
+        var minutos = partes[1];
+        var ampm = horas >= 12 ? "PM" : "AM";
+
+        horas = horas % 12;
+        horas = horas ? horas : 12;
+        var horasStr = horas < 10 ? "0" + horas : horas;
+
+        return horasStr + ":" + minutos + " " + ampm;
+    }
+
+    function obtenerFechaFormateada(fechaIso) {
+        if (!fechaIso) return "-";
+        var partes = fechaIso.split("-");
+        if (partes.length < 3) return fechaIso;
+
+        var fechaObj = new Date(partes[0], partes[1] - 1, partes[2]);
+        var diasSemana = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+        var meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+
+        var diaSemana = diasSemana[fechaObj.getDay()];
+        var diaNumero = fechaObj.getDate();
+        var mesNombre = meses[fechaObj.getMonth()];
+
+        return diaSemana + " " + diaNumero + " de " + mesNombre;
+    }
+
+    function preguntarDestinatarioWA() {
+        var seleccionados = document.querySelectorAll(".chk-fila:checked");
+        if (seleccionados.length === 0) {
+            alert("Por favor, selecciona al menos una reservación para generar la tarjeta.");
+            return;
+        }
+
+        document.getElementById("modalDestinatario").style.display = "flex";
+    }
+
+    function seleccionarOpcionWA(tipo) {
+        cerrarModalDestinatario();
+        generarImagenWhatsApp(tipo);
+    }
+
+    function cerrarModalDestinatario() {
+        document.getElementById("modalDestinatario").style.display = "none";
+    }
+
+    async function generarImagenWhatsApp(tipoDestinatario) {
+        var seleccionados = Array.from(document.querySelectorAll(".chk-fila:checked"));
+
+        var contenedorTarjeta = document.getElementById("tarjetaVistaPrevia");
+        contenedorTarjeta.innerHTML = ""; 
+
+        var primerTelefono = "";
+
+        seleccionados.forEach(function(chk, index) {
+            var fila = chk.parentElement.parentElement;
+            
+            var nombre = obtenerValorCelda(fila.cells[1], 1);
+            var apellido = obtenerValorCelda(fila.cells[2], 2);
+            var fechaIso = obtenerValorCelda(fila.cells[3], 3);
+            var diaFormateado = obtenerFechaFormateada(fechaIso);
+            var horaBruta = obtenerValorCelda(fila.cells[5], 5);
+            var hora = formatearHora12h(horaBruta);
+            var menu = obtenerValorCelda(fila.cells[6], 6);
+            var phone = obtenerValorCelda(fila.cells[7], 7).replace(/\D/g, '');
+            var personas = obtenerValorCelda(fila.cells[8], 8);
+            var area = obtenerValorCelda(fila.cells[9], 9);
+            var status = obtenerValorCelda(fila.cells[10], 10);
+            var cantAnticipo = obtenerValorCelda(fila.cells[11], 11);
+            var viaAnticipo = obtenerValorCelda(fila.cells[12], 12);
+            var comCocina = obtenerValorCelda(fila.cells[13], 13);
+            var comMeseros = obtenerValorCelda(fila.cells[14], 14);
+
+            if (index === 0 && phone) {
+                primerTelefono = phone;
+            }
+
+            var areaFormateada = area.replace(/^P\.\s*/, "Privado ");
+
+            var etiquetaUltimoCampo = "Estado:";
+            var valorUltimoCampo = status;
+
+            if (tipoDestinatario === "comensal") {
+                etiquetaUltimoCampo = "Anticipo:";
+                if (cantAnticipo && cantAnticipo.trim() !== "") {
+                    valorUltimoCampo = cantAnticipo + " (" + viaAnticipo + ")";
+                } else {
+                    valorUltimoCampo = "Pendiente";
+                }
+            }
+
+            var htmlNotasEquipo = '';
+            if (tipoDestinatario === "equipo") {
+                if (comCocina && comCocina.trim() !== "") {
+                    htmlNotasEquipo += '<div class="item-tarjeta"><span class="etiqueta">Cocina:</span><span class="valor">' + comCocina + '</span></div>';
+                }
+                if (comMeseros && comMeseros.trim() !== "") {
+                    htmlNotasEquipo += '<div class="item-tarjeta"><span class="etiqueta">Meseros:</span><span class="valor">' + comMeseros + '</span></div>';
+                }
+            }
+
+            var bloque = document.createElement("div");
+            bloque.className = "bloque-tarjeta";
+            bloque.innerHTML = 
+                '<h2>Detalle de Reservación #' + (index + 1) + '</h2>' +
+                '<div class="item-tarjeta"><span class="etiqueta">Cliente:</span><span class="valor">' + nombre + ' ' + apellido + '</span></div>' +
+                '<div class="item-tarjeta"><span class="etiqueta">Número de personas:</span><span class="valor">' + (personas || "1") + '</span></div>' +
+                '<div class="item-tarjeta"><span class="etiqueta">Día:</span><span class="valor">' + diaFormateado + '</span></div>' +
+                '<div class="item-tarjeta"><span class="etiqueta">Hora:</span><span class="valor">' + hora + '</span></div>' +
+                '<div class="item-tarjeta"><span class="etiqueta">Menú:</span><span class="valor">' + (menu || "-") + '</span></div>' +
+                '<div class="item-tarjeta"><span class="etiqueta">Área:</span><span class="valor">' + areaFormateada + '</span></div>' +
+                '<div class="item-tarjeta"><span class="etiqueta">' + etiquetaUltimoCampo + '</span><span class="valor">' + valorUltimoCampo + '</span></div>' +
+                htmlNotasEquipo;
+
+            contenedorTarjeta.appendChild(bloque);
+        });
+
+        if (primerTelefono.length === 10) {
+            primerTelefono = "52" + primerTelefono;
+        }
+
+        const canvas = await html2canvas(contenedorTarjeta);
+        var enlace = document.createElement("a");
+        enlace.download = "Reservaciones_" + tipoDestinatario.toUpperCase() + ".png";
+        enlace.href = canvas.toDataURL("image/png");
+        enlace.click();
+
+        canvas.toBlob(async function(blob) {
+            try {
+                await navigator.clipboard.write([
+                    new ClipboardItem({ "image/png": blob })
+                ]);
+                alert("¡Imagen lista (" + tipoDestinatario + ") y copiada al portapapeles!\nPresiona Ctrl + V en WhatsApp Web.");
+            } catch (err) {
+                console.log("No se pudo copiar automáticamente al portapapeles.");
+            }
+        });
+
+        var mensaje = "Hola, adjunto la imagen con el resumen de las reservaciones.";
+        var urlWA = primerTelefono 
+            ? "https://web.whatsapp.com/send?phone=" + primerTelefono + "&text=" + encodeURIComponent(mensaje)
+            : "https://web.whatsapp.com/";
+
+        window.open(urlWA, "_blank");
+    }
+
+    function actualizarDia(inputFecha) {
+        var fechaVal = inputFecha.value;
+        var fila = inputFecha.parentElement.parentElement;
+        var celdaDia = fila.cells[4];
+
+        if (!fechaVal) {
+            celdaDia.innerText = "";
+            return;
+        }
+
+        var partes = fechaVal.split("-");
+        var fechaObj = new Date(partes[0], partes[1] - 1, partes[2]);
+        var diasSemana = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+        celdaDia.innerText = diasSemana[fechaObj.getDay()];
+    }
+
+    function actualizarMenu(inputHora) {
+        var horaVal = inputHora.value;
+        var fila = inputHora.parentElement.parentElement;
+        var celdaMenu = fila.cells[6];
+
+        if (!horaVal) {
+            celdaMenu.innerText = "";
+            return;
+        }
+
+        var horaInt = parseInt(horaVal.split(":")[0], 10);
+
+        if (horaInt < 14) {
+            celdaMenu.innerText = "Desayuno";
+        } else {
+            celdaMenu.innerText = "Comida/cena";
+        }
+    }
+
+    function marcarTodasLasFilas(source) {
+        var checkboxes = document.querySelectorAll(".chk-fila");
+        checkboxes.forEach(function(chk) { chk.checked = source.checked; });
+    }
+
+    function eliminarFilasSeleccionadas() {
+        var checkboxes = document.querySelectorAll(".chk-fila:checked");
+
+        if (checkboxes.length === 0) {
+            alert("Por favor, selecciona al menos una fila marcando la casilla de la izquierda.");
+            return;
+        }
+
+        var confirmacion = confirm("¿Seguro que desea eliminar las filas seleccionadas?");
+        if (confirmacion) {
+            checkboxes.forEach(function(chk) {
+                var fila = chk.parentElement.parentElement;
+                fila.parentElement.removeChild(fila);
+            });
+            guardarTabla();
+        }
+    }
+
+    function abrirMenuExcel(e, colIndex) {
+        e.stopPropagation();
+        columnaActual = colIndex;
+
+        var menu = document.getElementById("menuExcel");
+        var btn = e.target;
+        var rect = btn.getBoundingClientRect();
+
+        menu.style.display = "block";
+        menu.style.top = (rect.bottom + 4) + "px";
+        
+        var leftPos = rect.left - 180;
+        if (leftPos < 10) leftPos = 10;
+        menu.style.left = leftPos + "px";
+
+        poblarCheckboxes(colIndex);
+    }
+
+    function cerrarMenu() {
+        document.getElementById("menuExcel").style.display = "none";
+    }
+
+    function poblarCheckboxes(colIndex) {
+        var tbody = document.getElementById("cuerpoTabla");
+        var valores = new Set();
+
+        for (var i = 0; i < tbody.rows.length; i++) {
+            var val = obtenerValorCelda(tbody.rows[i].cells[colIndex], colIndex);
+            valores.add(val || "(Vacías)");
+        }
+
+        var contenedor = document.getElementById("contenedorCheckboxes");
+        contenedor.innerHTML = "";
+
+        var labelTodo = document.createElement("label");
+        labelTodo.innerHTML = '<input type="checkbox" id="chkTodos" checked onchange="marcarTodos(this)"> <b>(Seleccionar todo)</b>';
+        contenedor.appendChild(labelTodo);
+
+        var seleccionadosPreviamente = filtrosSeleccionados[colIndex];
+
+        valores.forEach(function(val) {
+            var isChecked = !seleccionadosPreviamente || seleccionadosPreviamente.includes(val);
+            var label = document.createElement("label");
+            label.innerHTML = '<input type="checkbox" class="chk-item" value="' + val + '" ' + (isChecked ? 'checked' : '') + '> ' + val;
+            contenedor.appendChild(label);
+        });
+    }
+
+    function marcarTodos(source) {
+        var checkboxes = document.querySelectorAll(".chk-item");
+        checkboxes.forEach(function(chk) { chk.checked = source.checked; });
+    }
+
+    function aplicarFiltrosExcel() {
+        var checkboxes = document.querySelectorAll(".chk-item");
+        var seleccionados = [];
+
+        checkboxes.forEach(function(chk) {
+            if (chk.checked) seleccionados.push(chk.value);
+        });
+
+        filtrosSeleccionados[columnaActual] = seleccionados;
+
+        var tbody = document.getElementById("cuerpoTabla");
+
+        for (var i = 0; i < tbody.rows.length; i++) {
+            var fila = tbody.rows[i];
+            var mostrar = true;
+
+            for (var col = 1; col < 15; col++) {
+                if (filtrosSeleccionados[col]) {
+                    var valCelda = obtenerValorCelda(fila.cells[col], col) || "(Vacías)";
+                    if (!filtrosSeleccionados[col].includes(valCelda)) {
+                        mostrar = false;
+                        break;
+                    }
+                }
+            }
+            fila.style.display = mostrar ? "" : "none";
+        }
+
+        cerrarMenu();
+    }
+
+    function ordenarColumna(direccion) {
+        var tbody = document.getElementById("cuerpoTabla");
+        var filas = Array.from(tbody.rows);
+
+        filas.sort(function(a, b) {
+            var valA = obtenerValorCelda(a.cells[columnaActual], columnaActual).toLowerCase();
+            var valB = obtenerValorCelda(b.cells[columnaActual], columnaActual).toLowerCase();
+
+            if (valA < valB) return direccion === 'ASC' ? -1 : 1;
+            if (valA > valB) return direccion === 'ASC' ? 1 : -1;
+            return 0;
+        });
+
+        filas.forEach(function(fila) { tbody.appendChild(fila); });
+        guardarTabla();
+        cerrarMenu();
+    }
+
+    function limpiarFiltros() {
+        filtrosSeleccionados = {};
+        var tbody = document.getElementById("cuerpoTabla");
+        for (var i = 0; i < tbody.rows.length; i++) {
+            tbody.rows[i].style.display = "";
+        }
+    }
+
+    function agregarFila() {
+        crearFilaHTML(["", "", "", "", "", "", "", "", "Salón", "Pendiente", "", "Efectivo", "", ""]);
+        guardarTabla();
+    }
+
+    function cambiarColor(select) {
+        var celda = select.parentElement;
+        celda.style.backgroundColor = obtenerColorStatus(select.value);
+    }
+
+    function obtenerColorStatus(valor) {
+        if (valor === "Confirmado") return "#d4edda";
+        if (valor === "Cancelado") return "#f8d7da";
+        if (valor === "Terminado") return "#ffffff";
+        return "#fff3cd";
+    }
+
+    function obtenerValorCelda(celda, indice) {
+        if (indice === 3) {
+            var inputDate = celda.querySelector("input");
+            return inputDate ? inputDate.value : "";
+        } else if (indice === 5) {
+            var inputTime = celda.querySelector("input");
+            return inputTime ? inputTime.value : "";
+        } else if (indice === 9) {
+            var selectArea = celda.querySelector("select");
+            return selectArea ? selectArea.value : "Salón";
+        } else if (indice === 10) {
+            var selectStatus = celda.querySelector("select");
+            return selectStatus ? selectStatus.value : "Pendiente";
+        } else if (indice === 12) {
+            var selectVia = celda.querySelector("select");
+            return selectVia ? selectVia.value : "Efectivo";
+        } else {
+            return celda.innerText.trim();
+        }
+    }
+
+    function guardarTabla(alerta) {
+        var tbody = document.getElementById("cuerpoTabla");
+        var datosGuardar = [];
+
+        for (var i = 0; i < tbody.rows.length; i++) {
+            var fila = tbody.rows[i];
+            var filaData = [];
+
+            for (var j = 1; j < 15; j++) {
+                filaData.push(obtenerValorCelda(fila.cells[j], j));
+            }
+            datosGuardar.push(filaData);
+        }
+
+        localStorage.setItem("tablaReservasDatos", JSON.stringify(datosGuardar));
+
+        if (alerta === true) {
+            alert("¡Cambios guardados con éxito!");
+        }
+    }
+
+    function regresar() {
+        guardarTabla();
+        window.location.href = "html2.html";
+    }
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head> <meta charset="UTF-8">
+	<title> Iniciar Sesión</title>
+    <meta charset="UTF-8">
+    <title>Reservaciones</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: sans-serif;
+        }
+
+        .campo {
+            margin-bottom: 15px;
+        }
+
+        label {
+            font-size: 22px;
+            font-weight: bold;
+            display: inline-block;
+            width: 140px;
+        }
+
+        input[type="text"], 
+        input[type="password"] {
+            font-size: 18px;
+            padding: 5px 10px;
+        }
+
+        button {
+            padding: 15px 30px;
+            font-size: 20px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body> 
+
+	<form>
+		<label>Usuario:</label>
+		<input type="text" id="userInput">
+		<br><br>
+		<label>Contraseña:</label> 
+		<input type="password" id="passInput">
+		<br><br>
+ 		<button type="button" onclick="validar ()">Entrar</button>
+	</form>
+	<script>
+		function validar() {
+    var usuario = document.getElementById("userInput").value;
+    var clave = document.getElementById("passInput").value;
+
+    if (usuario === "perla" && clave === "1234") {
+        window.location.href="html2.html";
+    } else {
+        alert("Usuario o contraseña incorrectos.");
+    }
+}
+	</script>
+</body> 
+</html>
