@@ -5,6 +5,11 @@
     <title>Registro de Reservaciones</title>
     <!-- Librería para convertir HTML a Imagen -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <!-- Firebase SDK (Compatibilidad para scripts clásicos) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -407,14 +412,25 @@
     </div>
 
     <script>
+    // Inicialización de Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyCI5yWdLu1Z3XJ-94KwU3qaEU3vCA5sZOQ",
+        authDomain: "reservaciones-quijote.firebaseapp.com",
+        databaseURL: "https://reservaciones-quijote-default-rtdb.firebaseio.com",
+        projectId: "reservaciones-quijote",
+        storageBucket: "reservaciones-quijote.firebasestorage.app",
+        messagingSenderId: "455456029270",
+        appId: "1:455456029270:web:f2b28b6c1ac5bb4a4f59f7",
+        measurementId: "G-B0BMD25W5N"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
     var columnas = ["", "Nombre", "Apellido", "Fecha", "Día", "Hora", "Menú", "#phone", "#p", "Área", "Status", "Cantidad Anticipo", "Vía Anticipo", "Comentarios para Cocina", "Comentarios para Meseros"];
     var columnaActual = null;
     var filtrosSeleccionados = {};
 
-
-
-
-    // Función auxiliar para detectar el usuario desde la URL o el LocalStorage
     function obtenerUsuarioActual() {
         var urlParams = new URLSearchParams(window.location.search);
         var usuarioUrl = urlParams.get('user') || urlParams.get('usuario');
@@ -429,7 +445,6 @@
             return usuarioStorage;
         }
 
-        // Si la URL contiene una ruta específica con el nombre de usuario (ej. /quijote/ o /perla/)
         var path = window.location.pathname.toLowerCase();
         if (path.includes("quijote")) return "quijote";
         if (path.includes("perla")) return "perla";
@@ -450,7 +465,21 @@
         document.getElementById("nombreUsuarioTitulo").textContent = usuarioActivo;
 
         generarEncabezados();
-        cargarTabla();
+        
+        // Escuchar datos en tiempo real desde Firebase
+        var claveStorage = obtenerClaveUsuario();
+        if (claveStorage) {
+            db.ref(claveStorage).on('value', function(snapshot) {
+                var reservas = snapshot.val();
+                if (reservas) {
+                    renderizarTabla(reservas);
+                } else {
+                    // Si no hay datos en la nube, intenta leer del localStorage local
+                    var datosLocales = JSON.parse(localStorage.getItem(claveStorage)) || [];
+                    renderizarTabla(datosLocales);
+                }
+            });
+        }
 
         document.addEventListener("click", function(e) {
             var menu = document.getElementById("menuExcel");
@@ -515,11 +544,7 @@
         });
     }
 
-    function cargarTabla() {
-        var claveStorage = obtenerClaveUsuario();
-        if (!claveStorage) return;
-
-        var reservas = JSON.parse(localStorage.getItem(claveStorage)) || datosIniciales;
+    function renderizarTabla(reservas) {
         var tbody = document.getElementById("cuerpoTabla");
         tbody.innerHTML = "";
 
@@ -561,16 +586,16 @@
                         '<option value="Terraza"' + (areaVal === 'Terraza' ? ' selected' : '') + '>Terraza</option>' +
                     '</select>';
             } else if (i === 10) {
-    var statusVal = valor || "Pendiente";
-    var estiloStatus = obtenerColorStatus(statusVal);
-    celda.style.backgroundColor = estiloStatus.bg;
-    celda.innerHTML = 
-        '<select class="status-select" style="background-color:' + estiloStatus.bg + '; color:' + estiloStatus.color + ';" onchange="cambiarColor(this); guardarTabla();">' +
-            '<option value="Pendiente"' + (statusVal === 'Pendiente' ? ' selected' : '') + '>Pendiente</option>' +
-            '<option value="Confirmado"' + (statusVal === 'Confirmado' ? ' selected' : '') + '>Confirmado</option>' +
-            '<option value="Cancelado"' + (statusVal === 'Cancelado' ? ' selected' : '') + '>Cancelado</option>' +
-            '<option value="Terminado"' + (statusVal === 'Terminado' ? ' selected' : '') + '>Terminado</option>' +
-        '</select>';
+                var statusVal = valor || "Pendiente";
+                var estiloStatus = obtenerColorStatus(statusVal);
+                celda.style.backgroundColor = estiloStatus.bg;
+                celda.innerHTML = 
+                    '<select class="status-select" style="background-color:' + estiloStatus.bg + '; color:' + estiloStatus.color + ';" onchange="cambiarColor(this); guardarTabla();">' +
+                        '<option value="Pendiente"' + (statusVal === 'Pendiente' ? ' selected' : '') + '>Pendiente</option>' +
+                        '<option value="Confirmado"' + (statusVal === 'Confirmado' ? ' selected' : '') + '>Confirmado</option>' +
+                        '<option value="Cancelado"' + (statusVal === 'Cancelado' ? ' selected' : '') + '>Cancelado</option>' +
+                        '<option value="Terminado"' + (statusVal === 'Terminado' ? ' selected' : '') + '>Terminado</option>' +
+                    '</select>';
             } else if (i === 11) {
                 celda.contentEditable = "true";
                 celda.innerText = formatearDineroSinDecimales(valor);
@@ -926,19 +951,19 @@
     }
 
     function cambiarColor(select) {
-    var celda = select.parentElement;
-    var estilo = obtenerColorStatus(select.value);
-    celda.style.backgroundColor = estilo.bg;
-    select.style.backgroundColor = estilo.bg;
-    select.style.color = estilo.color;
-}
+        var celda = select.parentElement;
+        var estilo = obtenerColorStatus(select.value);
+        celda.style.backgroundColor = estilo.bg;
+        select.style.backgroundColor = estilo.bg;
+        select.style.color = estilo.color;
+    }
 
-       function obtenerColorStatus(valor) {
-    if (valor === "Confirmado") return { bg: "#C6EFCE", color: "#006100" }; // Verde
-    if (valor === "Cancelado")  return { bg: "#FFC7CE", color: "#9C0006" }; // Rojo
-     if (valor === "Terminado")  return { bg: "#E2EFDA", color: "#375623" }; // blanco
-    return { bg: "#FFEB9C", color: "#9C6500" };                             // Amarillo (Pendiente)
-}
+    function obtenerColorStatus(valor) {
+        if (valor === "Confirmado") return { bg: "#C6EFCE", color: "#006100" }; // Verde
+        if (valor === "Cancelado")  return { bg: "#FFC7CE", color: "#9C0006" }; // Rojo
+        if (valor === "Terminado")  return { bg: "#E2EFDA", color: "#375623" }; // Blanco/Verde oscuro
+        return { bg: "#FFEB9C", color: "#9C6500" };                             // Amarillo (Pendiente)
+    }
 
     function obtenerValorCelda(celda, indice) {
         if (indice === 3) {
@@ -978,11 +1003,22 @@
             datosGuardar.push(filaData);
         }
 
+        // Guardar copia local en el navegador
         localStorage.setItem(claveStorage, JSON.stringify(datosGuardar));
 
-        if (alerta === true) {
-            alert("¡Cambios guardados con éxito!");
-        }
+        // Sincronizar en la nube de Firebase
+        db.ref(claveStorage).set(datosGuardar)
+            .then(function() {
+                if (alerta === true) {
+                    alert("¡Cambios guardados con éxito en la nube!");
+                }
+            })
+            .catch(function(error) {
+                console.error("Error al guardar en Firebase:", error);
+                if (alerta === true) {
+                    alert("Guardado localmente. Revisa tu conexión a internet.");
+                }
+            });
     }
 
     function regresar() {
