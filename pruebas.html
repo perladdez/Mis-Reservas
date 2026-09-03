@@ -926,16 +926,19 @@
     }
 
     function cambiarColor(select) {
-        var celda = select.parentElement;
-        celda.style.backgroundColor = obtenerColorStatus(select.value);
-    }
+    var celda = select.parentElement;
+    var estilo = obtenerColorStatus(select.value);
+    celda.style.backgroundColor = estilo.bg;
+    select.style.backgroundColor = estilo.bg;
+    select.style.color = estilo.color;
+}
 
     function obtenerColorStatus(valor) {
-        if (valor === "Confirmado") return "#d4edda";
-        if (valor === "Cancelado") return "#f8d7da";
-        if (valor === "Terminado") return "#ffffff";
-        return "#fff3cd";
-    }
+    if (valor === "Confirmado") return { bg: "#C6EFCE", color: "#006100" };
+    if (valor === "Cancelado")  return { bg: "#FFC7CE", color: "#9C0006" };
+    if (valor === "Terminado")  return { bg: "#E2EFDA", color: "#375623" };
+    return { bg: "#FFEB9C", color: "#9C6500" };
+}
 
     function obtenerValorCelda(celda, indice) {
         if (indice === 3) {
