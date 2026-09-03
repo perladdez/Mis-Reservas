@@ -561,15 +561,16 @@
                         '<option value="Terraza"' + (areaVal === 'Terraza' ? ' selected' : '') + '>Terraza</option>' +
                     '</select>';
             } else if (i === 10) {
-                var statusVal = valor || "Pendiente";
-                celda.style.backgroundColor = obtenerColorStatus(statusVal);
-                celda.innerHTML = 
-                    '<select class="status-select" onchange="cambiarColor(this); guardarTabla();">' +
-                        '<option value="Pendiente"' + (statusVal === 'Pendiente' ? ' selected' : '') + '>Pendiente</option>' +
-                        '<option value="Confirmado"' + (statusVal === 'Confirmado' ? ' selected' : '') + '>Confirmado</option>' +
-                        '<option value="Cancelado"' + (statusVal === 'Cancelado' ? ' selected' : '') + '>Cancelado</option>' +
-                        '<option value="Terminado"' + (statusVal === 'Terminado' ? ' selected' : '') + '>Terminado</option>' +
-                    '</select>';
+    var statusVal = valor || "Pendiente";
+    var estiloStatus = obtenerColorStatus(statusVal);
+    celda.style.backgroundColor = estiloStatus.bg;
+    celda.innerHTML = 
+        '<select class="status-select" style="background-color:' + estiloStatus.bg + '; color:' + estiloStatus.color + ';" onchange="cambiarColor(this); guardarTabla();">' +
+            '<option value="Pendiente"' + (statusVal === 'Pendiente' ? ' selected' : '') + '>Pendiente</option>' +
+            '<option value="Confirmado"' + (statusVal === 'Confirmado' ? ' selected' : '') + '>Confirmado</option>' +
+            '<option value="Cancelado"' + (statusVal === 'Cancelado' ? ' selected' : '') + '>Cancelado</option>' +
+            '<option value="Terminado"' + (statusVal === 'Terminado' ? ' selected' : '') + '>Terminado</option>' +
+        '</select>';
             } else if (i === 11) {
                 celda.contentEditable = "true";
                 celda.innerText = formatearDineroSinDecimales(valor);
