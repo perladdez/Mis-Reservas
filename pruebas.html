@@ -594,7 +594,7 @@ if (!urlParams.get('user') && usuarioGuardado) {
                         '<option value="Terraza"' + (areaVal === 'Terraza' ? ' selected' : '') + '>Terraza</option>' +
                     '</select>';
             } else if (i === 10) {
-                var statusVal = valor || "Pendiente";
+                var statusVal = valor || "   ";
                 var estiloStatus = obtenerColorStatus(statusVal);
                 celda.style.backgroundColor = estiloStatus.bg;
                 celda.innerHTML = 
@@ -603,6 +603,7 @@ if (!urlParams.get('user') && usuarioGuardado) {
                         '<option value="Confirmado"' + (statusVal === 'Confirmado' ? ' selected' : '') + '>Confirmado</option>' +
                         '<option value="Cancelado"' + (statusVal === 'Cancelado' ? ' selected' : '') + '>Cancelado</option>' +
                         '<option value="Terminado"' + (statusVal === 'Terminado' ? ' selected' : '') + '>Terminado</option>' +
+                        '<option value="No requerido"' + (statusVal === 'No requerido' ? ' selected' : '') + '>Terminado</option>' +
                     '</select>';
             } else if (i === 11) {
                 celda.contentEditable = "true";
