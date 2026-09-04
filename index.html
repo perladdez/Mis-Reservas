@@ -79,22 +79,19 @@
 function validarLogin(event) {
     event.preventDefault();
 
-    // Normalizamos el usuario (minúsculas y sin espacios extras)
     var usuarioInput = document.getElementById("usuario").value.trim().toLowerCase();
     var passwordInput = document.getElementById("password").value.trim();
 
-    // Credenciales exactas definidas
     var credenciales = {
         "perla": "1234",
         "quijote": "q0000"
     };
 
     if (credenciales[usuarioInput] && credenciales[usuarioInput] === passwordInput) {
-        // Guarda el usuario activo en el navegador
         localStorage.setItem("usuarioActual", usuarioInput);
 
-        // Redirige pasando el usuario en la URL
-        window.location.href = "html2.html?usuario=" + encodeURIComponent(usuarioInput);
+        // Se usa ?user= para que Firebase cargue la base de datos del usuario
+        window.location.href = "pruebas.html?user=" + encodeURIComponent(usuarioInput);
     } else {
         alert("Usuario o contraseña incorrectos.");
     }
