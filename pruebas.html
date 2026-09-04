@@ -777,7 +777,7 @@ if (!urlParams.get('user') && usuarioGuardado) {
             }
         });
 
-        var mensaje = "Hola, adjunto la imagen con el resumen de las reservaciones.";
+        var mensaje = "Buen día, adjunto comprobante con el resumen de su reservación.";
         var urlWA = primerTelefono 
             ? "https://web.whatsapp.com/send?phone=" + primerTelefono + "&text=" + encodeURIComponent(mensaje)
             : "https://web.whatsapp.com/";
@@ -969,7 +969,7 @@ if (!urlParams.get('user') && usuarioGuardado) {
     function obtenerColorStatus(valor) {
         if (valor === "Confirmado") return { bg: "#C6EFCE", color: "#006100" }; // Verde
         if (valor === "Cancelado")  return { bg: "#FFC7CE", color: "#9C0006" }; // Rojo
-        if (valor === "Terminado")  return { bg: "#E2EFDA", color: "#375623" }; // Blanco/Verde oscuro
+        if (valor === "Terminado")  return { bg: "#E2EFDA", color: "#375623" }; // Verde oscuro
         return { bg: "#FFEB9C", color: "#9C6500" };                             // Amarillo (Pendiente)
     }
 
