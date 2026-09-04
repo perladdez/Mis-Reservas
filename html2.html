@@ -26,18 +26,16 @@
     <button type="button" onclick="nuevaReserva()">Nueva Reservación</button>
     <button type="button" onclick="nuevaReserva()">Pruebas</button>
 
-    <script>
-    function verPrevias() {
-        window.location.href = "Reservas Previas.html";
-    }
+<script>
+  // Obtiene el usuario actual de la URL
+  const params = new URLSearchParams(window.location.search);
+  const usuario = params.get('user') || params.get('usuario') || localStorage.getItem('usuarioActual') || 'quijote';
 
-    function nuevaReserva() {
-        window.location.href = "Nuevareservación.html";
-    }
-    function nuevaReserva() {
-        window.location.href = "pruebas.html";
-    }
-    </script>
+  // Asigna el usuario a todos los enlaces hacia pruebas.html
+  document.querySelectorAll("a[href*='pruebas.html']").forEach(link => {
+      link.href = `pruebas.html?user=${encodeURIComponent(usuario)}`;
+  });
+</script>
 
 </body> 
 </html>
