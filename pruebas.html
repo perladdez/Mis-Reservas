@@ -606,36 +606,37 @@ if (!urlParams.get('user') && usuarioGuardado) {
             '<option value="Terminado"' + (statusVal === 'Terminado' ? ' selected' : '') + '>Terminado</option>' +
         '</select>';
 
-            } else if (i === 11) {
-                celda.contentEditable = "true";
-                celda.innerText = formatearDineroSinDecimales(valor);
-                celda.onkeydown = function(e) { manejarEnter(e, celda); };
-                celda.onblur = function() {
-                    this.innerText = formatearDineroSinDecimales(this.innerText);
-                    guardarTabla();
-                };
-            } else if (i === 12) {
-                var viaVal = valor || "Efectivo";
-                celda.innerHTML = 
-                    '<select class="celda-select" onchange="guardarTabla();">' +
-                        '<option value="Efectivo"' + (viaVal === 'Efectivo' ? ' selected' : '') + '>Efectivo</option>' +
-                        '<option value="Tarjeta"' + (viaVal === 'Tarjeta' ? ' selected' : '') + '>Tarjeta</option>' +
-                        '<option value="Transferencia"' + (viaVal === 'Transferencia' ? ' selected' : '') + '>Transferencia</option>' +
-                        '<option value="Otros"' + (viaVal === 'Otros' ? ' selected' : '') + '>Otros</option>' +
-                        '<option value="No requerido"' + (viaVal === 'No requerido' ? ' selected' : '') + '>No requerido</option>' +
-                    '</select>';
-            } else if (i === 13 || i === 14|| i === 15) {
-                celda.contentEditable = "true";
-                celda.innerText = valor || "";
-                celda.onblur = function() { guardarTabla(); };
-            } else {
-                celda.contentEditable = "true";
-                celda.innerText = valor || "";
-                celda.onkeydown = function(e) { manejarEnter(e, celda); };
-                celda.onblur = function() { guardarTabla(); };
+} else if (i === 11) {
+    // CANTIDAD ANTICIPO
+    celda.contentEditable = "true";
+    celda.innerText = formatearDineroSinDecimales(valor);
+    celda.onkeydown = function(e) { manejarEnter(e, celda); };
+    celda.onblur = function() {
+        this.innerText = formatearDineroSinDecimales(this.innerText);
+        guardarTabla();
+    };
+
+} else if (i === 12) {
+    // VÍA ANTICIPO
+    var viaVal = valor || "Efectivo";
+    celda.innerHTML = 
+        '<select class="celda-select" onchange="guardarTabla();">' +
+            '<option value="Efectivo"' + (viaVal === 'Efectivo' ? ' selected' : '') + '>Efectivo</option>' +
+            '<option value="Tarjeta"' + (viaVal === 'Tarjeta' ? ' selected' : '') + '>Tarjeta</option>' +
+            '<option value="Transferencia"' + (viaVal === 'Transferencia' ? ' selected' : '') + '>Transferencia</option>' +
+            '<option value="Otros"' + (viaVal === 'Otros' ? ' selected' : '') + '>Otros</option>' +
+            '<option value="No requerido"' + (viaVal === 'No requerido' ? ' selected' : '') + '>No requerido</option>' +
+        '</select>';
+
+} else if (i === 13 || i === 14 || i === 15) {
+    // COMENTARIOS (Cocina, Meseros, Barra)
+    celda.contentEditable = "true";
+    celda.innerText = valor || "";
+    celda.onkeydown = function(e) { manejarEnter(e, celda); };
+    celda.onblur = function() { guardarTabla(); };
+}
             }
         }
-    }
 
     function formatearHora12h(hora24) {
         if (!hora24) return "-";
