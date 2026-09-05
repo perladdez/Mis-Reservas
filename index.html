@@ -134,7 +134,7 @@ function validarLogin(event) {
 
     if (credenciales[usuarioInput] && credenciales[usuarioInput] === passwordInput) {
         localStorage.setItem("usuarioActual", usuarioInput);
-        window.location.href = "pruebas.html?user=" + encodeURIComponent(usuarioInput);
+        window.location.href = "html2.html?user=" + encodeURIComponent(usuarioInput);
     } else {
         alert("Usuario o contraseña incorrectos.");
     }
