@@ -417,9 +417,9 @@
     </div>
 
     <div class="acciones">
-        <button type="button" class="btn-agregar" onclick="agregarFila()">+ Agregar Fila</button>
+        <button type="button" class="btn-agregar" id="btnAgregarFila" onclick="agregarFila()">+ Agregar Fila</button>
         <button type="button" class="btn-eliminar" id="btnEliminarFilas" onclick="eliminarFilasSeleccionadas()">Eliminar Filas</button>
-        <button type="button" class="btn-wa" onclick="preguntarDestinatarioWA()">📲 Enviar por WhatsApp</button>
+        <button type="button" class="btn-wa" id="btnEnviarWA" onclick="preguntarDestinatarioWA()">📲 Enviar por WhatsApp</button>
         <button type="button" class="btn-guardar" onclick="guardarTabla(true)">Guardar Cambios</button>
         <button type="button" class="btn-limpiar" onclick="limpiarFiltros()">Quitar Filtros</button>
         <button type="button" class="btn-regresar" onclick="regresar()">Volver al menú</button>
@@ -507,7 +507,7 @@
 
         document.getElementById("nombreUsuarioTitulo").textContent = usuarioActivo;
 
-        evaluarPermisoEliminar();
+        evaluarPermisosBotones();
 
         generarEncabezados();
         
@@ -534,14 +534,31 @@
         });
     };
 
-    function evaluarPermisoEliminar() {
+    function evaluarPermisosBotones() {
         var btnEliminar = document.getElementById("btnEliminarFilas");
+        var btnWA = document.getElementById("btnEnviarWA");
+        var btnAgregar = document.getElementById("btnAgregarFila");
         var vistaActual = (document.getElementById("selectorVista") ? document.getElementById("selectorVista").value : "").toLowerCase();
         
+        // 1. Eliminar filas
         if (esUsuarioMesero() || vistaActual === "meseros" || vistaActual === "anticipos") {
             btnEliminar.style.display = "none";
         } else {
             btnEliminar.style.display = "inline-block";
+        }
+
+        // 2. Enviar por WhatsApp
+        if (esUsuarioMesero() || vistaActual === "meseros") {
+            btnWA.style.display = "none";
+        } else {
+            btnWA.style.display = "inline-block";
+        }
+
+        // 3. Agregar fila
+        if (vistaActual === "anticipos") {
+            btnAgregar.style.display = "none";
+        } else {
+            btnAgregar.style.display = "inline-block";
         }
     }
 
@@ -568,7 +585,7 @@
             }
         }
 
-        evaluarPermisoEliminar();
+        evaluarPermisosBotones();
     }
 
     function capitalizarPrimerLetra(texto) {
@@ -789,6 +806,12 @@
     }
 
     function preguntarDestinatarioWA() {
+        var vistaActual = (document.getElementById("selectorVista") ? document.getElementById("selectorVista").value : "").toLowerCase();
+        if (esUsuarioMesero() || vistaActual === "meseros") {
+            alert("No tienes permisos autorizados para enviar por WhatsApp.");
+            return;
+        }
+
         var seleccionados = document.querySelectorAll(".chk-fila:checked");
         if (seleccionados.length === 0) {
             alert("Por favor, selecciona al menos una reservación para generar la tarjeta.");
@@ -1102,9 +1125,14 @@
     }
 
     function agregarFila() {
+        var vistaActual = (document.getElementById("selectorVista") ? document.getElementById("selectorVista").value : "").toLowerCase();
+        if (vistaActual === "anticipos") {
+            alert("No se permite agregar filas desde la vista de Anticipos.");
+            return;
+        }
+
         crearFilaHTML(["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""]);
         guardarTabla();
-        var vistaActual = document.getElementById("selectorVista").value;
         cambiarVista(vistaActual);
     }
 
