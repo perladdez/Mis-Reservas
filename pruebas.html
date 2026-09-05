@@ -584,7 +584,7 @@ if (!urlParams.get('user') && usuarioGuardado) {
                 celda.innerText = valor;
                 celda.style.backgroundColor = "#f0f0f0";
             } else if (i === 9) {
-                var areaVal = valor || "Salón";
+                var areaVal = valor || "   ";
                 celda.innerHTML = 
                     '<select class="celda-select" onchange="guardarTabla();">' +
                         '<option value="Salón"' + (areaVal === 'Salón' ? ' selected' : '') + '>Salón</option>' +
@@ -599,11 +599,10 @@ if (!urlParams.get('user') && usuarioGuardado) {
                 celda.style.backgroundColor = estiloStatus.bg;
                 celda.innerHTML = 
                    '<select class="celda-select" onchange="guardarTabla();">' +
-    '<option value="Pendiente"' + (viaVal === 'Efectivo' ? ' selected' : '') + '>Efectivo</option>' +
-    '<option value="Tarjeta"' + (viaVal === 'Tarjeta' ? ' selected' : '') + '>Tarjeta</option>' +
-    '<option value="Transferencia"' + (viaVal === 'Transferencia' ? ' selected' : '') + '>Transferencia</option>' +
-    '<option value="Otros"' + (viaVal === 'Otros' ? ' selected' : '') + '>Otros</option>' +
-    '<option value="No requerido"' + (viaVal === 'No requerido' ? ' selected' : '') + '>No requerido</option>' +
+    '<option value="Pendiente"' + (viaVal === 'Pendiente' ? ' selected' : '') + '>Pendiente</option>' +
+    '<option value="Confirmado"' + (viaVal === 'Confirmado' ? ' selected' : '') + '>Confirmado</option>' +
+    '<option value="Cancelado"' + (viaVal === 'Cancelado' ? ' selected' : '') + '>Cancelado</option>' +
+    '<option value="Terminado"' + (viaVal === 'Terminado' ? ' selected' : '') + '>Terminado</option>' +
 '</select>';
             } else if (i === 11) {
                 celda.contentEditable = "true";
