@@ -238,7 +238,6 @@
 
         .btn-agregar { background-color: #28a745; }
         .btn-eliminar { background-color: #dc3545; }
-        .btn-eliminar:disabled { background-color: #94a3b8; cursor: not-allowed; }
         .btn-wa { background-color: #25d366; color: white; }
         .btn-guardar { background-color: #007bff; }
         .btn-limpiar { background-color: #ffc107; color: #333; }
@@ -508,11 +507,7 @@
 
         document.getElementById("nombreUsuarioTitulo").textContent = usuarioActivo;
 
-        if (esUsuarioMesero()) {
-            var btnEliminar = document.getElementById("btnEliminarFilas");
-            btnEliminar.disabled = true;
-            btnEliminar.title = "Los meseros no tienen permisos para eliminar filas.";
-        }
+        evaluarPermisoEliminar();
 
         generarEncabezados();
         
@@ -539,6 +534,17 @@
         });
     };
 
+    function evaluarPermisoEliminar() {
+        var btnEliminar = document.getElementById("btnEliminarFilas");
+        var vistaActual = (document.getElementById("selectorVista") ? document.getElementById("selectorVista").value : "").toLowerCase();
+        
+        if (esUsuarioMesero() || vistaActual === "meseros" || vistaActual === "anticipos") {
+            btnEliminar.style.display = "none";
+        } else {
+            btnEliminar.style.display = "inline-block";
+        }
+    }
+
     function cambiarVista(vista) {
         var tabla = document.getElementById("tablaReservas");
         var filas = tabla.rows;
@@ -561,6 +567,8 @@
                 }
             }
         }
+
+        evaluarPermisoEliminar();
     }
 
     function capitalizarPrimerLetra(texto) {
@@ -672,7 +680,6 @@
                 celda.innerText = valor;
                 celda.style.backgroundColor = "#f0f0f0";
             } else if (i === 9) {
-                // ÁREA
                 var areaVal = valor || "";
                 celda.innerHTML = 
                     '<select class="celda-select" onchange="guardarTabla();">' +
@@ -684,7 +691,6 @@
                         '<option value="Terraza"' + (areaVal === 'Terraza' ? ' selected' : '') + '>Terraza</option>' +
                     '</select>';
             } else if (i === 10) {
-                // STATUS
                 var statusVal = valor || "";
                 var estiloStatus = obtenerColorStatus(statusVal);
                 celda.style.backgroundColor = estiloStatus.bg;
@@ -697,7 +703,6 @@
                     '<option value="Terminado"' + (statusVal === 'Terminado' ? ' selected' : '') + '>Terminado</option>' +
                 '</select>';
             } else if (i === 11) {
-                // CANTIDAD ANTICIPO
                 celda.contentEditable = "true";
                 celda.innerText = formatearDineroSinDecimales(valor);
                 celda.onkeydown = function(e) { manejarEnter(e, celda); };
@@ -706,7 +711,6 @@
                     guardarTabla();
                 };
             } else if (i === 12) {
-                // VÍA ANTICIPO
                 var viaVal = valor || "";
                 celda.innerHTML = 
                     '<select class="celda-select" onchange="guardarTabla();">' +
@@ -718,12 +722,10 @@
                         '<option value="No requerido"' + (viaVal === 'No requerido' ? ' selected' : '') + '>No requerido</option>' +
                     '</select>';
             } else if (i === 17) {
-                // PIN (Generado automáticamente de 4 dígitos si está vacío)
                 var pinVal = valor || generarPINUnico();
                 celda.innerText = pinVal;
                 celda.style.backgroundColor = "#f0f0f0";
             } else if (i === 18) {
-                // ALTA TRASPASOS
                 var altaVal = valor || "";
                 celda.innerHTML = 
                     '<select class="celda-select" onchange="guardarTabla();">' +
@@ -733,7 +735,6 @@
                         '<option value="No requerido"' + (altaVal === 'No requerido' ? ' selected' : '') + '>No requerido</option>' +
                     '</select>';
             } else if (i === 19) {
-                // RETORNO DE ANTICIPO
                 var retornoVal = valor || "";
                 celda.innerHTML = 
                     '<select class="celda-select" onchange="guardarTabla();">' +
@@ -743,12 +744,10 @@
                         '<option value="No requerido"' + (retornoVal === 'No requerido' ? ' selected' : '') + '>No requerido</option>' +
                     '</select>';
             } else if (i === 13 || i === 14 || i === 15) {
-                // Comentarios
                 celda.contentEditable = "true";
                 celda.innerText = valor || "";
                 celda.onblur = function() { guardarTabla(); };
             } else {
-                // Nombre, Apellido, Phone, Personas, Responsable
                 celda.contentEditable = "true";
                 celda.innerText = valor || "";
                 celda.onkeydown = function(e) { manejarEnter(e, celda); };
@@ -818,7 +817,7 @@
 
         seleccionados.forEach(function(chk, index) {
             var fila = chk.parentElement.parentElement;
-            
+
             var nombre = obtenerValorCelda(fila.cells[1], 1);
             var apellido = obtenerValorCelda(fila.cells[2], 2);
             var fechaIso = obtenerValorCelda(fila.cells[3], 3);
@@ -834,6 +833,8 @@
             var viaAnticipo = obtenerValorCelda(fila.cells[12], 12);
             var comCocina = obtenerValorCelda(fila.cells[13], 13);
             var comMeseros = obtenerValorCelda(fila.cells[14], 14);
+            var comBarra = obtenerValorCelda(fila.cells[15], 15);
+            var pin = obtenerValorCelda(fila.cells[17], 17);
 
             if (index === 0 && phone) {
                 primerTelefono = phone;
@@ -844,15 +845,18 @@
             var etiquetaUltimoCampo = "Estado:";
             var valorUltimoCampo = status || "-";
 
+            var tieneAnticipo = cantAnticipo && cantAnticipo.trim() !== "";
+
             if (tipoDestinatario === "comensal") {
                 etiquetaUltimoCampo = "Anticipo:";
-                if (cantAnticipo && cantAnticipo.trim() !== "") {
+                if (tieneAnticipo) {
                     valorUltimoCampo = cantAnticipo + (viaAnticipo ? " (" + viaAnticipo + ")" : "");
                 } else {
                     valorUltimoCampo = "Pendiente";
                 }
             }
 
+            // Bloque dinámico para notas de equipo
             var htmlNotasEquipo = '';
             if (tipoDestinatario === "equipo") {
                 if (comCocina && comCocina.trim() !== "") {
@@ -861,6 +865,19 @@
                 if (comMeseros && comMeseros.trim() !== "") {
                     htmlNotasEquipo += '<div class="item-tarjeta"><span class="etiqueta">Meseros:</span><span class="valor">' + comMeseros + '</span></div>';
                 }
+                if (comBarra && comBarra.trim() !== "") {
+                    htmlNotasEquipo += '<div class="item-tarjeta"><span class="etiqueta">Barra:</span><span class="valor">' + comBarra + '</span></div>';
+                }
+            }
+
+            // Bloque dinámico exclusivo para comensal (solo si tiene anticipo registrado)
+            var htmlComensalPin = '';
+            if (tipoDestinatario === "comensal" && tieneAnticipo) {
+                htmlComensalPin = 
+                    '<div class="item-tarjeta"><span class="etiqueta">PIN:</span><span class="valor">' + (pin || "-") + '</span></div>' +
+                    '<div style="text-align: center; margin-top: 14px; font-size: 15px; color: #F2EBDD; font-style: italic;">' +
+                        'Pin de seguridad. No compartir.' +
+                    '</div>';
             }
 
             var bloque = document.createElement("div");
@@ -874,7 +891,8 @@
                 '<div class="item-tarjeta"><span class="etiqueta">Menú:</span><span class="valor">' + (menu || "-") + '</span></div>' +
                 '<div class="item-tarjeta"><span class="etiqueta">Área:</span><span class="valor">' + areaFormateada + '</span></div>' +
                 '<div class="item-tarjeta"><span class="etiqueta">' + etiquetaUltimoCampo + '</span><span class="valor">' + valorUltimoCampo + '</span></div>' +
-                htmlNotasEquipo;
+                htmlNotasEquipo +
+                htmlComensalPin;
 
             contenedorTarjeta.appendChild(bloque);
         });
@@ -892,7 +910,7 @@
         canvas.toBlob(async function(blob) {
             try {
                 await navigator.clipboard.write([
-                    new ClipboardItem({ "image/png": blob })
+                    new ClipboardItem({ [blob.type]: blob })
                 ]);
                 alert("¡Imagen lista (" + tipoDestinatario + ") y copiada al portapapeles!\nPresiona Ctrl + V en WhatsApp Web.");
             } catch (err) {
@@ -949,8 +967,10 @@
     }
 
     function eliminarFilasSeleccionadas() {
-        if (esUsuarioMesero()) {
-            alert("Los meseros no tienen autorizados los permisos para eliminar filas.");
+        var vistaActual = (document.getElementById("selectorVista") ? document.getElementById("selectorVista").value : "").toLowerCase();
+        
+        if (esUsuarioMesero() || vistaActual === "meseros" || vistaActual === "anticipos") {
+            alert("No tienes permisos autorizados para eliminar filas.");
             return;
         }
 
