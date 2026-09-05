@@ -634,7 +634,12 @@ if (!urlParams.get('user') && usuarioGuardado) {
     celda.innerText = valor || "";
     celda.onkeydown = function(e) { manejarEnter(e, celda); };
     celda.onblur = function() { guardarTabla(); };
-}
+} else {
+        // CELDAS DE TEXTO NORMALES (Nombre, Apellido, Teléfono, Personas, Comentarios, etc.)
+        celda.contentEditable = "true";
+        celda.innerText = valor || "";
+        celda.onkeydown = function(e) { manejarEnter(e, celda); };
+        celda.onblur = function() { guardarTabla(); };
             }
         }
 
