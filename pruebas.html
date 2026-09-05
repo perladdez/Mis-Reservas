@@ -569,79 +569,75 @@ if (!urlParams.get('user') && usuarioGuardado) {
         celdaCheck.innerHTML = '<input type="checkbox" class="chk-fila">';
         celdaCheck.style.textAlign = "center";
 
-        for (var i = 1; i < 16; i++) {
-            var celda = nuevaFila.insertCell(i);
-            var valor = datos ? datos[i - 1] : "";
+for (var i = 1; i < 16; i++) {
+    var celda = nuevaFila.insertCell(i);
+    var valor = datos ? datos[i - 1] : "";
 
-            if (i === 3) {
-                celda.innerHTML = '<input type="date" value="' + valor + '" onchange="actualizarDia(this); guardarTabla();">';
-            } else if (i === 4) {
-                celda.innerText = capitalizarPrimerLetra(valor);
-                celda.style.backgroundColor = "#f0f0f0";
-            } else if (i === 5) {
-                celda.innerHTML = '<input type="time" value="' + valor + '" onchange="actualizarMenu(this); guardarTabla();">';
-            } else if (i === 6) {
-                celda.innerText = valor;
-                celda.style.backgroundColor = "#f0f0f0";
-            } else if (i === 9) {
-                var areaVal = valor || "   ";
-                celda.innerHTML = 
-                    '<select class="celda-select" onchange="guardarTabla();">' +
-                        '<option value="Salón"' + (areaVal === 'Salón' ? ' selected' : '') + '>Salón</option>' +
-                        '<option value="P. Grande"' + (areaVal === 'P. Grande' ? ' selected' : '') + '>P. Grande</option>' +
-                        '<option value="P. Chico 1"' + (areaVal === 'P. Chico 1' ? ' selected' : '') + '>P. Chico 1</option>' +
-                        '<option value="P. Chico 2"' + (areaVal === 'P. Chico 2' ? ' selected' : '') + '>P. Chico 2</option>' +
-                        '<option value="Terraza"' + (areaVal === 'Terraza' ? ' selected' : '') + '>Terraza</option>' +
-                    '</select>';
-} else if (i === 10) {
-    // STATUS
-    var statusVal = valor || "Pendiente";
-    var estiloStatus = obtenerColorStatus(statusVal);
-    celda.style.backgroundColor = estiloStatus.bg;
-    celda.innerHTML = 
-        '<select class="status-select" style="background-color:' + estiloStatus.bg + '; color:' + estiloStatus.color + ';" onchange="cambiarColor(this); guardarTabla();">' +
-            '<option value="Pendiente"' + (statusVal === 'Pendiente' ? ' selected' : '') + '>Pendiente</option>' +
-            '<option value="Confirmado"' + (statusVal === 'Confirmado' ? ' selected' : '') + '>Confirmado</option>' +
-            '<option value="Cancelado"' + (statusVal === 'Cancelado' ? ' selected' : '') + '>Cancelado</option>' +
-            '<option value="Terminado"' + (statusVal === 'Terminado' ? ' selected' : '') + '>Terminado</option>' +
-        '</select>';
-
-} else if (i === 11) {
-    // CANTIDAD ANTICIPO
-    celda.contentEditable = "true";
-    celda.innerText = formatearDineroSinDecimales(valor);
-    celda.onkeydown = function(e) { manejarEnter(e, celda); };
-    celda.onblur = function() {
-        this.innerText = formatearDineroSinDecimales(this.innerText);
-        guardarTabla();
-    };
-
-} else if (i === 12) {
-    // VÍA ANTICIPO
-    var viaVal = valor || "Efectivo";
-    celda.innerHTML = 
-        '<select class="celda-select" onchange="guardarTabla();">' +
-            '<option value="Efectivo"' + (viaVal === 'Efectivo' ? ' selected' : '') + '>Efectivo</option>' +
-            '<option value="Tarjeta"' + (viaVal === 'Tarjeta' ? ' selected' : '') + '>Tarjeta</option>' +
-            '<option value="Transferencia"' + (viaVal === 'Transferencia' ? ' selected' : '') + '>Transferencia</option>' +
-            '<option value="Otros"' + (viaVal === 'Otros' ? ' selected' : '') + '>Otros</option>' +
-            '<option value="No requerido"' + (viaVal === 'No requerido' ? ' selected' : '') + '>No requerido</option>' +
-        '</select>';
-
-} else if (i === 13 || i === 14 || i === 15) {
-    // COMENTARIOS (Cocina, Meseros, Barra)
-    celda.contentEditable = "true";
-    celda.innerText = valor || "";
-    celda.onkeydown = function(e) { manejarEnter(e, celda); };
-    celda.onblur = function() { guardarTabla(); };
-} else {
+    if (i === 3) {
+        // FECHA
+        celda.innerHTML = '<input type="date" value="' + valor + '" onchange="actualizarDia(this); guardarTabla();">';
+    } else if (i === 4) {
+        // DÍA (Calculado automáticamente)
+        celda.innerText = capitalizarPrimerLetra(valor);
+        celda.style.backgroundColor = "#f0f0f0";
+    } else if (i === 5) {
+        // HORA
+        celda.innerHTML = '<input type="time" value="' + valor + '" onchange="actualizarMenu(this); guardarTabla();">';
+    } else if (i === 6) {
+        // MENÚ (Calculado automáticamente)
+        celda.innerText = valor;
+        celda.style.backgroundColor = "#f0f0f0";
+    } else if (i === 9) {
+        // ÁREA
+        var areaVal = valor || "   ";
+        celda.innerHTML = 
+            '<select class="celda-select" onchange="guardarTabla();">' +
+                '<option value="Salón"' + (areaVal === 'Salón' ? ' selected' : '') + '>Salón</option>' +
+                '<option value="P. Grande"' + (areaVal === 'P. Grande' ? ' selected' : '') + '>P. Grande</option>' +
+                '<option value="P. Chico 1"' + (areaVal === 'P. Chico 1' ? ' selected' : '') + '>P. Chico 1</option>' +
+                '<option value="P. Chico 2"' + (areaVal === 'P. Chico 2' ? ' selected' : '') + '>P. Chico 2</option>' +
+                '<option value="Terraza"' + (areaVal === 'Terraza' ? ' selected' : '') + '>Terraza</option>' +
+            '</select>';
+    } else if (i === 10) {
+        // STATUS
+        var statusVal = valor || "Pendiente";
+        var estiloStatus = obtenerColorStatus(statusVal);
+        celda.style.backgroundColor = estiloStatus.bg;
+        celda.innerHTML = 
+            '<select class="status-select" style="background-color:' + estiloStatus.bg + '; color:' + estiloStatus.color + ';" onchange="cambiarColor(this); guardarTabla();">' +
+                '<option value="Pendiente"' + (statusVal === 'Pendiente' ? ' selected' : '') + '>Pendiente</option>' +
+                '<option value="Confirmado"' + (statusVal === 'Confirmado' ? ' selected' : '') + '>Confirmado</option>' +
+                '<option value="Cancelado"' + (statusVal === 'Cancelado' ? ' selected' : '') + '>Cancelado</option>' +
+                '<option value="Terminado"' + (statusVal === 'Terminado' ? ' selected' : '') + '>Terminado</option>' +
+            '</select>';
+    } else if (i === 11) {
+        // CANTIDAD ANTICIPO
+        celda.contentEditable = "true";
+        celda.innerText = formatearDineroSinDecimales(valor);
+        celda.onkeydown = function(e) { manejarEnter(e, celda); };
+        celda.onblur = function() {
+            this.innerText = formatearDineroSinDecimales(this.innerText);
+            guardarTabla();
+        };
+    } else if (i === 12) {
+        // VÍA ANTICIPO
+        var viaVal = valor || "Efectivo";
+        celda.innerHTML = 
+            '<select class="celda-select" onchange="guardarTabla();">' +
+                '<option value="Efectivo"' + (viaVal === 'Efectivo' ? ' selected' : '') + '>Efectivo</option>' +
+                '<option value="Tarjeta"' + (viaVal === 'Tarjeta' ? ' selected' : '') + '>Tarjeta</option>' +
+                '<option value="Transferencia"' + (viaVal === 'Transferencia' ? ' selected' : '') + '>Transferencia</option>' +
+                '<option value="Otros"' + (viaVal === 'Otros' ? ' selected' : '') + '>Otros</option>' +
+                '<option value="No requerido"' + (viaVal === 'No requerido' ? ' selected' : '') + '>No requerido</option>' +
+            '</select>';
+    } else {
         // CELDAS DE TEXTO NORMALES (Nombre, Apellido, Teléfono, Personas, Comentarios, etc.)
         celda.contentEditable = "true";
         celda.innerText = valor || "";
         celda.onkeydown = function(e) { manejarEnter(e, celda); };
         celda.onblur = function() { guardarTabla(); };
-            }
-        }
+    }
+}
 
     function formatearHora12h(hora24) {
         if (!hora24) return "-";
