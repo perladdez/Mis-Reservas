@@ -412,14 +412,6 @@
     </div>
 
     <script>
-// Auto-detectar y corregir usuario en la URL
-const urlParams = new URLSearchParams(window.location.search);
-let usuarioGuardado = urlParams.get('user') || urlParams.get('usuario') || localStorage.getItem('usuarioActual');
-
-if (!urlParams.get('user') && usuarioGuardado) {
-    window.location.replace(`pruebas.html?user=${encodeURIComponent(usuarioGuardado)}`);
-}
-
     // Inicialización de Firebase
     const firebaseConfig = {
         apiKey: "AIzaSyCI5yWdLu1Z3XJ-94KwU3qaEU3vCA5sZOQ",
@@ -435,7 +427,7 @@ if (!urlParams.get('user') && usuarioGuardado) {
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    var columnas = ["", "Nombre", "Apellido", "Fecha", "Día", "Hora", "Menú", "#phone", "#p", "Área", "Status", "Cantidad Anticipo", "Vía Anticipo", "Comentarios para Cocina", "Comentarios para Meseros", "Comentarios para Barra",];
+    var columnas = ["", "Nombre", "Apellido", "Fecha", "Día", "Hora", "Menú", "#phone", "#p", "Área", "Status", "Cantidad Anticipo", "Vía Anticipo", "Comentarios para Cocina", "Comentarios para Meseros"];
     var columnaActual = null;
     var filtrosSeleccionados = {};
 
