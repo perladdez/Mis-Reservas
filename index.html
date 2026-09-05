@@ -50,29 +50,35 @@
         }
 
         .password-container input {
-            padding-right: 35px; /* Espacio para que el texto no tape el ojo */
+            padding-right: 35px;
         }
 
-        .toggle-btn {
+        /* Estilos específicos para el botón del ojo */
+        button.toggle-btn {
             position: absolute;
             right: 8px;
-            background: none;
-            border: none;
+            background: none !important;
+            border: none !important;
             cursor: pointer;
-            padding: 0;
-            width: auto;
-            margin-top: 0;
+            padding: 0 !important;
+            width: auto !important;
+            margin-top: 0 !important;
             display: flex;
             align-items: center;
         }
 
-        /* Control de tamaño para el icono SVG */
+        button.toggle-btn:hover {
+            background: none !important;
+        }
+
+        /* Tamaño del icono SVG */
         .toggle-btn svg {
             width: 20px;
             height: 20px;
             fill: #666;
         }
 
+        /* Estilo para el botón principal de submit */
         button[type="submit"] {
             width: 100%;
             padding: 10px;
