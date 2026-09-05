@@ -594,7 +594,7 @@ if (!urlParams.get('user') && usuarioGuardado) {
                         '<option value="Terraza"' + (areaVal === 'Terraza' ? ' selected' : '') + '>Terraza</option>' +
                     '</select>';
             } else if (i === 10) {
-                var statusVal = valor || "   ";
+                var statusVal = valor || "Pendiente";
                 var estiloStatus = obtenerColorStatus(statusVal);
                 celda.style.backgroundColor = estiloStatus.bg;
                 celda.innerHTML = 
@@ -956,7 +956,7 @@ if (!urlParams.get('user') && usuarioGuardado) {
     }
 
     function agregarFila() {
-        crearFilaHTML(["", "", "", "", "", "", "", "", "Salón", "Pendiente", "", "Efectivo", "", ""]);
+        crearFilaHTML(["", "", "", "", "", "", "", "", "", "", "", "", "", "", ""]);
         guardarTabla();
     }
 
@@ -971,7 +971,7 @@ if (!urlParams.get('user') && usuarioGuardado) {
     function obtenerColorStatus(valor) {
         if (valor === "Confirmado") return { bg: "#C6EFCE", color: "#006100" }; // Verde
         if (valor === "Cancelado")  return { bg: "#FFC7CE", color: "#9C0006" }; // Rojo
-        if (valor === "Terminado")  return { bg: "#E2EFDA", color: "#375623" }; // Verde oscuro
+        if (valor === "Terminado")  return { bg: "#FFFFFF", color: "#375623" }; // Blanco
         return { bg: "#FFEB9C", color: "#9C6500" };                             // Amarillo (Pendiente)
     }
 
