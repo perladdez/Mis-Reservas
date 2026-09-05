@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <title>Registro de Reservaciones</title>
@@ -24,9 +24,39 @@
             margin-bottom: 20px;
         }
 
+        .contenedor-vistas {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            background: #ffffff;
+            padding: 12px 16px;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .contenedor-vistas label {
+            font-weight: bold;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .contenedor-vistas select {
+            padding: 6px 12px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+            background-color: #f8f9fa;
+            cursor: pointer;
+        }
+
+        .columna-oculta {
+            display: none !important;
+        }
+
         .contenedor-tabla {
             overflow: auto;
-            max-height: 80vh; /* Permite desplazamiento vertical manteniendo el header fijo */
+            max-height: 80vh;
             background: white;
             border-radius: 6px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
@@ -34,10 +64,10 @@
         }
 
         table {
-            border-collapse: separate; /* Requerido para el correcto funcionamiento de sticky */
+            border-collapse: separate;
             border-spacing: 0;
             width: 100%;
-            min-width: 1350px;
+            min-width: 1650px;
             font-size: 14px;
         }
 
@@ -50,7 +80,7 @@
             background-color: #ffffff;
         }
 
-        /* ===== CONGELAR PRIMERA FILA (ENCABEZADOS) ===== */
+        /* ===== CONGELAR PRIMERA FILA ===== */
         th {
             position: sticky;
             top: 0;
@@ -63,7 +93,6 @@
         }
 
         /* ===== CONGELAR PRIMERAS 3 COLUMNAS ===== */
-        /* Columna 0: Checkbox */
         th:nth-child(1), td:nth-child(1) {
             position: sticky;
             left: 0;
@@ -71,27 +100,23 @@
             min-width: 30px;
         }
 
-        /* Columna 1: Nombre */
         th:nth-child(2), td:nth-child(2) {
             position: sticky;
-            left: 51px; /* 30px + padding/borders */
+            left: 51px;
             min-width: 120px;
         }
 
-        /* Columna 2: Apellido */
         th:nth-child(3), td:nth-child(3) {
             position: sticky;
-            left: 192px; /* 51px + 120px + padding/borders */
+            left: 192px;
             min-width: 120px;
-            box-shadow: 2px 0 5px -1px rgba(0,0,0,0.15); /* Sombra divisoria para las columnas congeladas */
+            box-shadow: 2px 0 5px -1px rgba(0,0,0,0.15);
         }
 
-        /* Niveles de superposición (Z-Index) */
         tbody td:nth-child(1), tbody td:nth-child(2), tbody td:nth-child(3) {
             z-index: 5;
         }
 
-        /* La intersección entre la fila congelada y las columnas congeladas requiere el z-index más alto */
         thead th:nth-child(1), thead th:nth-child(2), thead th:nth-child(3) {
             z-index: 15;
             background-color: #d1d5db;
@@ -180,7 +205,7 @@
             background-color: #ffffff;
         }
 
-        input[type="date"], input[type="time"], select.celda-select {
+        input[type="date"], input[type="time"], select.celda-select, select.status-select {
             border: none;
             background: transparent;
             font-family: inherit;
@@ -190,12 +215,7 @@
         }
 
         select.status-select {
-            border: none;
-            background: transparent;
             font-weight: bold;
-            font-size: 14px;
-            width: 100%;
-            cursor: pointer;
         }
 
         .acciones {
@@ -218,12 +238,13 @@
 
         .btn-agregar { background-color: #28a745; }
         .btn-eliminar { background-color: #dc3545; }
+        .btn-eliminar:disabled { background-color: #94a3b8; cursor: not-allowed; }
         .btn-wa { background-color: #25d366; color: white; }
         .btn-guardar { background-color: #007bff; }
         .btn-limpiar { background-color: #ffc107; color: #333; }
         .btn-regresar { background-color: #333; }
 
-        /* Estilos del Contenedor Oculto para Generar Imagen */
+        /* Contenedor Oculto para Generar Imagen */
         #tarjetaVistaPrevia {
             position: absolute;
             top: -9999px;
@@ -354,6 +375,16 @@
 
     <h1>Registro de Reservaciones (<span id="nombreUsuarioTitulo">Cargando...</span>) </h1>
 
+    <!-- Control de Vistas -->
+    <div class="contenedor-vistas">
+        <label for="selectorVista">Vista de tabla:</label>
+        <select id="selectorVista" onchange="cambiarVista(this.value)">
+            <option value="general">General</option>
+            <option value="meseros">Meseros</option>
+            <option value="anticipos">Anticipos</option>
+        </select>
+    </div>
+
     <div class="contenedor-tabla">
         <table id="tablaReservas">
             <thead>
@@ -388,7 +419,7 @@
 
     <div class="acciones">
         <button type="button" class="btn-agregar" onclick="agregarFila()">+ Agregar Fila</button>
-        <button type="button" class="btn-eliminar" onclick="eliminarFilasSeleccionadas()">Eliminar Filas</button>
+        <button type="button" class="btn-eliminar" id="btnEliminarFilas" onclick="eliminarFilasSeleccionadas()">Eliminar Filas</button>
         <button type="button" class="btn-wa" onclick="preguntarDestinatarioWA()">📲 Enviar por WhatsApp</button>
         <button type="button" class="btn-guardar" onclick="guardarTabla(true)">Guardar Cambios</button>
         <button type="button" class="btn-limpiar" onclick="limpiarFiltros()">Quitar Filtros</button>
@@ -427,7 +458,14 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    var columnas = ["", "Nombre", "Apellido", "Fecha", "Día", "Hora", "Menú", "#phone", "#p", "Área", "Status", "Cantidad Anticipo", "Vía Anticipo", "Comentarios para Cocina", "Comentarios para Meseros", "Comentarios para Barra"];
+    var columnas = [
+        "", "Nombre", "Apellido", "Fecha", "Día", "Hora", 
+        "Menú", "#phone", "#p", "Área", "Status", 
+        "Cantidad Anticipo", "Vía Anticipo", 
+        "Comentarios para Cocina", "Comentarios para Meseros", "Comentarios para Barra",
+        "Responsable", "Pin", "Alta Traspasos", "Retorno de anticipo"
+    ];
+
     var columnaActual = null;
     var filtrosSeleccionados = {};
 
@@ -448,9 +486,15 @@
         var path = window.location.pathname.toLowerCase();
         if (path.includes("quijote")) return "quijote";
         if (path.includes("perla")) return "perla";
+        if (path.includes("mesero")) return "mesero";
 
         window.location.href = "index.html";
         return null;
+    }
+
+    function esUsuarioMesero() {
+        var usuario = (obtenerUsuarioActual() || "").toLowerCase();
+        return usuario.includes("mesero");
     }
 
     function obtenerClaveUsuario() {
@@ -464,9 +508,14 @@
 
         document.getElementById("nombreUsuarioTitulo").textContent = usuarioActivo;
 
+        if (esUsuarioMesero()) {
+            var btnEliminar = document.getElementById("btnEliminarFilas");
+            btnEliminar.disabled = true;
+            btnEliminar.title = "Los meseros no tienen permisos para eliminar filas.";
+        }
+
         generarEncabezados();
         
-        // Escuchar datos en tiempo real desde Firebase
         var claveStorage = obtenerClaveUsuario();
         if (claveStorage) {
             db.ref(claveStorage).on('value', function(snapshot) {
@@ -474,10 +523,11 @@
                 if (reservas) {
                     renderizarTabla(reservas);
                 } else {
-                    // Si no hay datos en la nube, intenta leer del localStorage local
                     var datosLocales = JSON.parse(localStorage.getItem(claveStorage)) || [];
                     renderizarTabla(datosLocales);
                 }
+                var vistaActual = document.getElementById("selectorVista").value;
+                cambiarVista(vistaActual);
             });
         }
 
@@ -488,6 +538,30 @@
             }
         });
     };
+
+    function cambiarVista(vista) {
+        var tabla = document.getElementById("tablaReservas");
+        var filas = tabla.rows;
+
+        var ocultarPorVista = {
+            "general": [],
+            "meseros": [7, 19],
+            "anticipos": [6, 13, 14, 15]
+        };
+
+        var columnasAOcultar = ocultarPorVista[vista] || [];
+
+        for (var i = 0; i < filas.length; i++) {
+            var celdas = filas[i].children;
+            for (var j = 0; j < celdas.length; j++) {
+                if (columnasAOcultar.includes(j)) {
+                    celdas[j].classList.add("columna-oculta");
+                } else {
+                    celdas[j].classList.remove("columna-oculta");
+                }
+            }
+        }
+    }
 
     function capitalizarPrimerLetra(texto) {
         if (!texto) return "";
@@ -513,6 +587,28 @@
                 if (elementoFoco) elementoFoco.focus();
             }
         }
+    }
+
+    function generarPINUnico() {
+        var tbody = document.getElementById("cuerpoTabla");
+        var pinesExistentes = new Set();
+
+        if (tbody) {
+            for (var i = 0; i < tbody.rows.length; i++) {
+                var celdaPin = tbody.rows[i].cells[17];
+                if (celdaPin) {
+                    var valPin = celdaPin.innerText.trim();
+                    if (valPin) pinesExistentes.add(valPin);
+                }
+            }
+        }
+
+        var nuevoPin = "";
+        do {
+            nuevoPin = Math.floor(1000 + Math.random() * 9000).toString();
+        } while (pinesExistentes.has(nuevoPin));
+
+        return nuevoPin;
     }
 
     function generarEncabezados() {
@@ -561,7 +657,7 @@
         celdaCheck.innerHTML = '<input type="checkbox" class="chk-fila">';
         celdaCheck.style.textAlign = "center";
 
-        for (var i = 1; i < 16; i++) {
+        for (var i = 1; i < 20; i++) {
             var celda = nuevaFila.insertCell(i);
             var valor = datos ? datos[i - 1] : "";
 
@@ -575,67 +671,91 @@
             } else if (i === 6) {
                 celda.innerText = valor;
                 celda.style.backgroundColor = "#f0f0f0";
-
-                //AREA
             } else if (i === 9) {
-                var areaVal = valor || "   ";
+                // ÁREA
+                var areaVal = valor || "";
                 celda.innerHTML = 
                     '<select class="celda-select" onchange="guardarTabla();">' +
+                        '<option value=""' + (areaVal === '' ? ' selected' : '') + '></option>' +
                         '<option value="Salón"' + (areaVal === 'Salón' ? ' selected' : '') + '>Salón</option>' +
                         '<option value="P. Grande"' + (areaVal === 'P. Grande' ? ' selected' : '') + '>P. Grande</option>' +
                         '<option value="P. Chico 1"' + (areaVal === 'P. Chico 1' ? ' selected' : '') + '>P. Chico 1</option>' +
                         '<option value="P. Chico 2"' + (areaVal === 'P. Chico 2' ? ' selected' : '') + '>P. Chico 2</option>' +
                         '<option value="Terraza"' + (areaVal === 'Terraza' ? ' selected' : '') + '>Terraza</option>' +
                     '</select>';
-
-                    // STATUS
             } else if (i === 10) {
-
-                var statusVal = valor || "Pendiente";
+                // STATUS
+                var statusVal = valor || "";
                 var estiloStatus = obtenerColorStatus(statusVal);
                 celda.style.backgroundColor = estiloStatus.bg;
                 celda.innerHTML = 
                     '<select class="status-select" style="background-color:' + estiloStatus.bg + '; color:' + estiloStatus.color + ';" onchange="cambiarColor(this); guardarTabla();">' +
+                    '<option value=""' + (statusVal === '' ? ' selected' : '') + '></option>' +
                     '<option value="Pendiente"' + (statusVal === 'Pendiente' ? ' selected' : '') + '>Pendiente</option>' +
                     '<option value="Confirmado"' + (statusVal === 'Confirmado' ? ' selected' : '') + '>Confirmado</option>' +
                     '<option value="Cancelado"' + (statusVal === 'Cancelado' ? ' selected' : '') + '>Cancelado</option>' +
                     '<option value="Terminado"' + (statusVal === 'Terminado' ? ' selected' : '') + '>Terminado</option>' +
                 '</select>';
-
-} else if (i === 11) {
-    // CANTIDAD ANTICIPO
-    celda.contentEditable = "true";
-    celda.innerText = formatearDineroSinDecimales(valor);
-    celda.onkeydown = function(e) { manejarEnter(e, celda); };
-    celda.onblur = function() {
-        this.innerText = formatearDineroSinDecimales(this.innerText);
-        guardarTabla();
-    };
-
-} else if (i === 12) {
-    // VÍA ANTICIPO
-    var viaVal = valor || "Efectivo";
-    celda.innerHTML = 
-        '<select class="celda-select" onchange="guardarTabla();">' +
-            '<option value="Efectivo"' + (viaVal === 'Efectivo' ? ' selected' : '') + '>Efectivo</option>' +
-            '<option value="Tarjeta"' + (viaVal === 'Tarjeta' ? ' selected' : '') + '>Tarjeta</option>' +
-            '<option value="Transferencia"' + (viaVal === 'Transferencia' ? ' selected' : '') + '>Transferencia</option>' +
-            '<option value="Otros"' + (viaVal === 'Otros' ? ' selected' : '') + '>Otros</option>' +
-            '<option value="No requerido"' + (viaVal === 'No requerido' ? ' selected' : '') + '>No requerido</option>' +
-        '</select>';
-
-} else if (i === 13 || i === 14 || i === 15) {
-         celda.contentEditable = "true";
+            } else if (i === 11) {
+                // CANTIDAD ANTICIPO
+                celda.contentEditable = "true";
+                celda.innerText = formatearDineroSinDecimales(valor);
+                celda.onkeydown = function(e) { manejarEnter(e, celda); };
+                celda.onblur = function() {
+                    this.innerText = formatearDineroSinDecimales(this.innerText);
+                    guardarTabla();
+                };
+            } else if (i === 12) {
+                // VÍA ANTICIPO
+                var viaVal = valor || "";
+                celda.innerHTML = 
+                    '<select class="celda-select" onchange="guardarTabla();">' +
+                        '<option value=""' + (viaVal === '' ? ' selected' : '') + '></option>' +
+                        '<option value="Efectivo"' + (viaVal === 'Efectivo' ? ' selected' : '') + '>Efectivo</option>' +
+                        '<option value="Tarjeta"' + (viaVal === 'Tarjeta' ? ' selected' : '') + '>Tarjeta</option>' +
+                        '<option value="Transferencia"' + (viaVal === 'Transferencia' ? ' selected' : '') + '>Transferencia</option>' +
+                        '<option value="Otros"' + (viaVal === 'Otros' ? ' selected' : '') + '>Otros</option>' +
+                        '<option value="No requerido"' + (viaVal === 'No requerido' ? ' selected' : '') + '>No requerido</option>' +
+                    '</select>';
+            } else if (i === 17) {
+                // PIN (Generado automáticamente de 4 dígitos si está vacío)
+                var pinVal = valor || generarPINUnico();
+                celda.innerText = pinVal;
+                celda.style.backgroundColor = "#f0f0f0";
+            } else if (i === 18) {
+                // ALTA TRASPASOS
+                var altaVal = valor || "";
+                celda.innerHTML = 
+                    '<select class="celda-select" onchange="guardarTabla();">' +
+                        '<option value=""' + (altaVal === '' ? ' selected' : '') + '></option>' +
+                        '<option value="Pendiente"' + (altaVal === 'Pendiente' ? ' selected' : '') + '>Pendiente</option>' +
+                        '<option value="Realizado"' + (altaVal === 'Realizado' ? ' selected' : '') + '>Realizado</option>' +
+                        '<option value="No requerido"' + (altaVal === 'No requerido' ? ' selected' : '') + '>No requerido</option>' +
+                    '</select>';
+            } else if (i === 19) {
+                // RETORNO DE ANTICIPO
+                var retornoVal = valor || "";
+                celda.innerHTML = 
+                    '<select class="celda-select" onchange="guardarTabla();">' +
+                        '<option value=""' + (retornoVal === '' ? ' selected' : '') + '></option>' +
+                        '<option value="Pendiente"' + (retornoVal === 'Pendiente' ? ' selected' : '') + '>Pendiente</option>' +
+                        '<option value="Realizado"' + (retornoVal === 'Realizado' ? ' selected' : '') + '>Realizado</option>' +
+                        '<option value="No requerido"' + (retornoVal === 'No requerido' ? ' selected' : '') + '>No requerido</option>' +
+                    '</select>';
+            } else if (i === 13 || i === 14 || i === 15) {
+                // Comentarios
+                celda.contentEditable = "true";
                 celda.innerText = valor || "";
                 celda.onblur = function() { guardarTabla(); };
             } else {
+                // Nombre, Apellido, Phone, Personas, Responsable
                 celda.contentEditable = "true";
                 celda.innerText = valor || "";
                 celda.onkeydown = function(e) { manejarEnter(e, celda); };
                 celda.onblur = function() { guardarTabla(); };
-}
             }
         }
+    }
 
     function formatearHora12h(hora24) {
         if (!hora24) return "-";
@@ -714,21 +834,20 @@
             var viaAnticipo = obtenerValorCelda(fila.cells[12], 12);
             var comCocina = obtenerValorCelda(fila.cells[13], 13);
             var comMeseros = obtenerValorCelda(fila.cells[14], 14);
-            var comBarra = obtenerValorCelda(fila.cells[15], 15);
 
             if (index === 0 && phone) {
                 primerTelefono = phone;
             }
 
-            var areaFormateada = area.replace(/^P\.\s*/, "Privado ");
+            var areaFormateada = area ? area.replace(/^P\.\s*/, "Privado ") : "-";
 
             var etiquetaUltimoCampo = "Estado:";
-            var valorUltimoCampo = status;
+            var valorUltimoCampo = status || "-";
 
             if (tipoDestinatario === "comensal") {
                 etiquetaUltimoCampo = "Anticipo:";
                 if (cantAnticipo && cantAnticipo.trim() !== "") {
-                    valorUltimoCampo = cantAnticipo + " (" + viaAnticipo + ")";
+                    valorUltimoCampo = cantAnticipo + (viaAnticipo ? " (" + viaAnticipo + ")" : "");
                 } else {
                     valorUltimoCampo = "Pendiente";
                 }
@@ -830,6 +949,11 @@
     }
 
     function eliminarFilasSeleccionadas() {
+        if (esUsuarioMesero()) {
+            alert("Los meseros no tienen autorizados los permisos para eliminar filas.");
+            return;
+        }
+
         var checkboxes = document.querySelectorAll(".chk-fila:checked");
 
         if (checkboxes.length === 0) {
@@ -916,7 +1040,7 @@
             var fila = tbody.rows[i];
             var mostrar = true;
 
-            for (var col = 1; col < 16; col++) {
+            for (var col = 1; col < 20; col++) {
                 if (filtrosSeleccionados[col]) {
                     var valCelda = obtenerValorCelda(fila.cells[col], col) || "(Vacías)";
                     if (!filtrosSeleccionados[col].includes(valCelda)) {
@@ -958,8 +1082,10 @@
     }
 
     function agregarFila() {
-        crearFilaHTML(["", "", "", "", "", "", "", "", "", "", "", "", "", "", ""]);
+        crearFilaHTML(["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""]);
         guardarTabla();
+        var vistaActual = document.getElementById("selectorVista").value;
+        cambiarVista(vistaActual);
     }
 
     function cambiarColor(select) {
@@ -971,28 +1097,21 @@
     }
 
     function obtenerColorStatus(valor) {
-        if (valor === "Confirmado") return { bg: "#C6EFCE", color: "#006100" }; // Verde
-        if (valor === "Cancelado")  return { bg: "#FFC7CE", color: "#9C0006" }; // Rojo
-        if (valor === "Terminado")  return { bg: "#FFFFFF", color: "#375623" }; // Blanco
-        return { bg: "#FFEB9C", color: "#9C6500" };                             // Amarillo (Pendiente)
+        if (valor === "Confirmado") return { bg: "#C6EFCE", color: "#006100" };
+        if (valor === "Cancelado")  return { bg: "#FFC7CE", color: "#9C0006" };
+        if (valor === "Terminado")  return { bg: "#FFFFFF", color: "#375623" };
+        if (valor === "Pendiente")  return { bg: "#FFEB9C", color: "#9C6500" };
+        return { bg: "#FFFFFF", color: "#000000" };
     }
 
     function obtenerValorCelda(celda, indice) {
-        if (indice === 3) {
-            var inputDate = celda.querySelector("input");
-            return inputDate ? inputDate.value : "";
-        } else if (indice === 5) {
-            var inputTime = celda.querySelector("input");
-            return inputTime ? inputTime.value : "";
-        } else if (indice === 9) {
-            var selectArea = celda.querySelector("select");
-            return selectArea ? selectArea.value : "";
-        } else if (indice === 10) {
-            var selectStatus = celda.querySelector("select");
-            return selectStatus ? selectStatus.value : "";
-        } else if (indice === 12) {
-            var selectVia = celda.querySelector("select");
-            return selectVia ? selectVia.value : "";
+        if (!celda) return "";
+        if (indice === 3 || indice === 5) {
+            var input = celda.querySelector("input");
+            return input ? input.value : "";
+        } else if (indice === 9 || indice === 10 || indice === 12 || indice === 18 || indice === 19) {
+            var select = celda.querySelector("select");
+            return select ? select.value : "";
         } else {
             return celda.innerText.trim();
         }
@@ -1009,16 +1128,14 @@
             var fila = tbody.rows[i];
             var filaData = [];
 
-            for (var j = 1; j < 16; j++) {
+            for (var j = 1; j < 20; j++) {
                 filaData.push(obtenerValorCelda(fila.cells[j], j));
             }
             datosGuardar.push(filaData);
         }
 
-        // Guardar copia local en el navegador
         localStorage.setItem(claveStorage, JSON.stringify(datosGuardar));
 
-        // Sincronizar en la nube de Firebase
         db.ref(claveStorage).set(datosGuardar)
             .then(function() {
                 if (alerta === true) {
