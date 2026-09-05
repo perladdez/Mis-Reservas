@@ -378,9 +378,10 @@
     <div class="contenedor-vistas">
         <label for="selectorVista">Vista de tabla:</label>
         <select id="selectorVista" onchange="cambiarVista(this.value)">
-            <option value="basico" selected>Básico</option>
-            <option value="general">General</option>
+            <option value="nueva_reservacion" selected>Nueva reservación</option>
+            <option value="meseros">Meseros</option>
             <option value="anticipos">Anticipos</option>
+            <option value="general">General</option>
         </select>
     </div>
 
@@ -420,7 +421,7 @@
         <button type="button" class="btn-agregar" id="btnAgregarFila" onclick="agregarFila()">+ Agregar Fila</button>
         <button type="button" class="btn-eliminar" id="btnEliminarFilas" onclick="eliminarFilasSeleccionadas()">Eliminar Filas</button>
         <button type="button" class="btn-wa" id="btnEnviarWA" onclick="preguntarDestinatarioWA()">📲 Enviar por WhatsApp</button>
-        <button type="button" class="btn-guardar" onclick="guardarTabla(true)">Guardar Cambios</button>
+        <button type="button" class="btn-guardar" id="btnGuardarCambios" onclick="guardarTabla(true)">Guardar Cambios</button>
         <button type="button" class="btn-limpiar" onclick="limpiarFiltros()">Quitar Filtros</button>
         <button type="button" class="btn-regresar" onclick="regresar()">Volver al menú</button>
     </div>
@@ -538,27 +539,35 @@
         var btnEliminar = document.getElementById("btnEliminarFilas");
         var btnWA = document.getElementById("btnEnviarWA");
         var btnAgregar = document.getElementById("btnAgregarFila");
+        var btnGuardar = document.getElementById("btnGuardarCambios");
         var vistaActual = (document.getElementById("selectorVista") ? document.getElementById("selectorVista").value : "").toLowerCase();
         
         // 1. Eliminar filas
-        if (esUsuarioMesero() || vistaActual === "basico" || vistaActual === "anticipos") {
+        if (esUsuarioMesero() || vistaActual === "nueva_reservacion" || vistaActual === "anticipos" || vistaActual === "meseros") {
             btnEliminar.style.display = "none";
         } else {
             btnEliminar.style.display = "inline-block";
         }
 
         // 2. Enviar por WhatsApp
-        if (esUsuarioMesero() || vistaActual === "basico") {
+        if (esUsuarioMesero() || vistaActual === "nueva_reservacion" || vistaActual === "meseros") {
             btnWA.style.display = "none";
         } else {
             btnWA.style.display = "inline-block";
         }
 
         // 3. Agregar fila
-        if (vistaActual === "anticipos") {
+        if (vistaActual === "anticipos" || vistaActual === "meseros") {
             btnAgregar.style.display = "none";
         } else {
             btnAgregar.style.display = "inline-block";
+        }
+
+        // 4. Guardar Cambios
+        if (vistaActual === "meseros") {
+            btnGuardar.style.display = "none";
+        } else {
+            btnGuardar.style.display = "inline-block";
         }
     }
 
@@ -566,10 +575,13 @@
         var tabla = document.getElementById("tablaReservas");
         var filas = tabla.rows;
 
+        // Ocultar columnas según la vista
+        // Columna 7: #phone, Columna 18: Alta Traspasos, Columna 19: Retorno de anticipo
         var ocultarPorVista = {
             "general": [],
-            "basico": [7, 19],
-            "anticipos": [6, 13, 14, 15]
+            "nueva_reservacion": [18, 19],
+            "anticipos": [6, 13, 14, 15],
+            "meseros": [18, 19]
         };
 
         var columnasAOcultar = ocultarPorVista[vista] || [];
@@ -582,6 +594,27 @@
                 } else {
                     celdas[j].classList.remove("columna-oculta");
                 }
+            }
+        }
+
+        // Modo solo lectura para vista "meseros"
+        var esModoLectura = (vista === "meseros");
+        var tbody = document.getElementById("cuerpoTabla");
+        for (var i = 0; i < tbody.rows.length; i++) {
+            var fila = tbody.rows[i];
+            for (var j = 1; j < fila.cells.length; j++) {
+                var celda = fila.cells[j];
+                
+                // Habilitar / Deshabilitar contenteditable
+                if (celda.hasAttribute("contenteditable")) {
+                    celda.contentEditable = esModoLectura ? "false" : "true";
+                }
+
+                // Habilitar / Deshabilitar inputs y selects
+                var elementosInput = celda.querySelectorAll("input, select");
+                elementosInput.forEach(function(el) {
+                    el.disabled = esModoLectura;
+                });
             }
         }
 
@@ -807,7 +840,7 @@
 
     function preguntarDestinatarioWA() {
         var vistaActual = (document.getElementById("selectorVista") ? document.getElementById("selectorVista").value : "").toLowerCase();
-        if (esUsuarioMesero() || vistaActual === "basico") {
+        if (esUsuarioMesero() || vistaActual === "nueva_reservacion" || vistaActual === "meseros") {
             alert("No tienes permisos autorizados para enviar por WhatsApp.");
             return;
         }
@@ -992,7 +1025,7 @@
     function eliminarFilasSeleccionadas() {
         var vistaActual = (document.getElementById("selectorVista") ? document.getElementById("selectorVista").value : "").toLowerCase();
         
-        if (esUsuarioMesero() || vistaActual === "basico" || vistaActual === "anticipos") {
+        if (esUsuarioMesero() || vistaActual === "nueva_reservacion" || vistaActual === "anticipos" || vistaActual === "meseros") {
             alert("No tienes permisos autorizados para eliminar filas.");
             return;
         }
@@ -1126,8 +1159,8 @@
 
     function agregarFila() {
         var vistaActual = (document.getElementById("selectorVista") ? document.getElementById("selectorVista").value : "").toLowerCase();
-        if (vistaActual === "anticipos") {
-            alert("No se permite agregar filas desde la vista de Anticipos.");
+        if (vistaActual === "anticipos" || vistaActual === "meseros") {
+            alert("No se permite agregar filas desde esta vista.");
             return;
         }
 
@@ -1166,6 +1199,9 @@
     }
 
     function guardarTabla(alerta) {
+        var vistaActual = (document.getElementById("selectorVista") ? document.getElementById("selectorVista").value : "").toLowerCase();
+        if (vistaActual === "meseros") return;
+
         var claveStorage = obtenerClaveUsuario();
         if (!claveStorage) return;
 
