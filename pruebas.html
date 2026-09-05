@@ -427,7 +427,7 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    var columnas = ["", "Nombre", "Apellido", "Fecha", "Día", "Hora", "Menú", "#phone", "#p", "Área", "Status", "Cantidad Anticipo", "Vía Anticipo", "Comentarios para Cocina", "Comentarios para Meseros"];
+    var columnas = ["", "Nombre", "Apellido", "Fecha", "Día", "Hora", "Menú", "#phone", "#p", "Área", "Status", "Cantidad Anticipo", "Vía Anticipo", "Comentarios para Cocina", "Comentarios para Meseros", "Comentarios para Barra"];
     var columnaActual = null;
     var filtrosSeleccionados = {};
 
@@ -575,6 +575,8 @@
             } else if (i === 6) {
                 celda.innerText = valor;
                 celda.style.backgroundColor = "#f0f0f0";
+
+                //AREA
             } else if (i === 9) {
                 var areaVal = valor || "   ";
                 celda.innerHTML = 
@@ -585,18 +587,20 @@
                         '<option value="P. Chico 2"' + (areaVal === 'P. Chico 2' ? ' selected' : '') + '>P. Chico 2</option>' +
                         '<option value="Terraza"' + (areaVal === 'Terraza' ? ' selected' : '') + '>Terraza</option>' +
                     '</select>';
-} else if (i === 10) {
-    // STATUS
-    var statusVal = valor || "Pendiente";
-    var estiloStatus = obtenerColorStatus(statusVal);
-    celda.style.backgroundColor = estiloStatus.bg;
-    celda.innerHTML = 
-        '<select class="status-select" style="background-color:' + estiloStatus.bg + '; color:' + estiloStatus.color + ';" onchange="cambiarColor(this); guardarTabla();">' +
-            '<option value="Pendiente"' + (statusVal === 'Pendiente' ? ' selected' : '') + '>Pendiente</option>' +
-            '<option value="Confirmado"' + (statusVal === 'Confirmado' ? ' selected' : '') + '>Confirmado</option>' +
-            '<option value="Cancelado"' + (statusVal === 'Cancelado' ? ' selected' : '') + '>Cancelado</option>' +
-            '<option value="Terminado"' + (statusVal === 'Terminado' ? ' selected' : '') + '>Terminado</option>' +
-        '</select>';
+
+                    // STATUS
+            } else if (i === 10) {
+
+                var statusVal = valor || "Pendiente";
+                var estiloStatus = obtenerColorStatus(statusVal);
+                celda.style.backgroundColor = estiloStatus.bg;
+                celda.innerHTML = 
+                    '<select class="status-select" style="background-color:' + estiloStatus.bg + '; color:' + estiloStatus.color + ';" onchange="cambiarColor(this); guardarTabla();">' +
+                    '<option value="Pendiente"' + (statusVal === 'Pendiente' ? ' selected' : '') + '>Pendiente</option>' +
+                    '<option value="Confirmado"' + (statusVal === 'Confirmado' ? ' selected' : '') + '>Confirmado</option>' +
+                    '<option value="Cancelado"' + (statusVal === 'Cancelado' ? ' selected' : '') + '>Cancelado</option>' +
+                    '<option value="Terminado"' + (statusVal === 'Terminado' ? ' selected' : '') + '>Terminado</option>' +
+                '</select>';
 
 } else if (i === 11) {
     // CANTIDAD ANTICIPO
@@ -912,7 +916,7 @@
             var fila = tbody.rows[i];
             var mostrar = true;
 
-            for (var col = 1; col < 15; col++) {
+            for (var col = 1; col < 16; col++) {
                 if (filtrosSeleccionados[col]) {
                     var valCelda = obtenerValorCelda(fila.cells[col], col) || "(Vacías)";
                     if (!filtrosSeleccionados[col].includes(valCelda)) {
@@ -982,13 +986,13 @@
             return inputTime ? inputTime.value : "";
         } else if (indice === 9) {
             var selectArea = celda.querySelector("select");
-            return selectArea ? selectArea.value : "Salón";
+            return selectArea ? selectArea.value : "";
         } else if (indice === 10) {
             var selectStatus = celda.querySelector("select");
-            return selectStatus ? selectStatus.value : "Pendiente";
+            return selectStatus ? selectStatus.value : "";
         } else if (indice === 12) {
             var selectVia = celda.querySelector("select");
-            return selectVia ? selectVia.value : "Efectivo";
+            return selectVia ? selectVia.value : "";
         } else {
             return celda.innerText.trim();
         }
@@ -1005,7 +1009,7 @@
             var fila = tbody.rows[i];
             var filaData = [];
 
-            for (var j = 1; j < 15; j++) {
+            for (var j = 1; j < 16; j++) {
                 filaData.push(obtenerValorCelda(fila.cells[j], j));
             }
             datosGuardar.push(filaData);
