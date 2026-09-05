@@ -2,157 +2,1207 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Iniciar Sesión</title>
+    <title>Registro de Reservaciones</title>
+    <!-- Librería para convertir HTML a Imagen -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <!-- Firebase SDK (Compatibilidad para scripts clásicos) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f8f9fa;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
+            padding: 20px;
             margin: 0;
+            background-color: #f8f9fa;
         }
 
-        .login-card {
-            background: white;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-            width: 300px;
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
         }
-a
-        .form-group {
+
+        .contenedor-vistas {
+            display: flex;
+            align-items: center;
+            gap: 10px;
             margin-bottom: 15px;
+            background: #ffffff;
+            padding: 12px 16px;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
 
-        label {
-            display: block;
-            margin-bottom: 5px;
+        .contenedor-vistas label {
             font-weight: bold;
             color: #333;
-        }
-
-        input[type="text"], input[type="password"] {
-            width: 100%;
-            padding: 8px;
-            box-sizing: border-box;
-            border: 1px solid #ccc;
-            border-radius: 4px;
             font-size: 14px;
         }
 
-        .password-container {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-
-        .password-container input {
-            padding-right: 35px;
-        }
-
-        button.toggle-btn {
-            position: absolute;
-            right: 8px;
-            background: none !important;
-            border: none !important;
+        .contenedor-vistas select {
+            padding: 6px 12px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+            background-color: #f8f9fa;
             cursor: pointer;
-            padding: 0 !important;
-            width: auto !important;
-            margin-top: 0 !important;
+        }
+
+        .columna-oculta {
+            display: none !important;
+        }
+
+        .contenedor-tabla {
+            overflow: auto;
+            max-height: 80vh;
+            background: white;
+            border-radius: 6px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        table {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+            min-width: 1650px;
+            font-size: 14px;
+        }
+
+        th, td {
+            padding: 8px 10px;
+            border-right: 1px solid #dee2e6;
+            border-bottom: 1px solid #dee2e6;
+            text-align: left;
+            vertical-align: top;
+            background-color: #ffffff;
+        }
+
+        /* ===== CONGELAR PRIMERA FILA ===== */
+        th {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background-color: #e9ecef;
+            color: #495057;
+            font-weight: bold;
+            user-select: none;
+            border-top: 1px solid #dee2e6;
+        }
+
+        /* ===== CONGELAR PRIMERAS 3 COLUMNAS ===== */
+        th:nth-child(1), td:nth-child(1) {
+            position: sticky;
+            left: 0;
+            width: 30px;
+            min-width: 30px;
+        }
+
+        th:nth-child(2), td:nth-child(2) {
+            position: sticky;
+            left: 51px;
+            min-width: 120px;
+        }
+
+        th:nth-child(3), td:nth-child(3) {
+            position: sticky;
+            left: 192px;
+            min-width: 120px;
+            box-shadow: 2px 0 5px -1px rgba(0,0,0,0.15);
+        }
+
+        tbody td:nth-child(1), tbody td:nth-child(2), tbody td:nth-child(3) {
+            z-index: 5;
+        }
+
+        thead th:nth-child(1), thead th:nth-child(2), thead th:nth-child(3) {
+            z-index: 15;
+            background-color: #d1d5db;
+        }
+
+        .th-header {
             display: flex;
+            justify-content: space-between;
             align-items: center;
         }
 
-        button.toggle-btn:hover {
-            background: none !important;
+        .btn-filtro {
+            background: #cbd5e1;
+            border: 1px solid #94a3b8;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11px;
+            padding: 2px 5px;
+            margin-left: 5px;
         }
 
-        .toggle-btn svg {
-            width: 20px;
-            height: 20px;
-            fill: #666;
+        .btn-filtro:hover {
+            background: #94a3b8;
+            color: white;
         }
 
-        button[type="submit"] {
-            width: 100%;
-            padding: 10px;
-            background-color: #007bff;
+        .menu-excel {
+            display: none;
+            position: fixed;
+            background-color: #ffffff;
+            border: 1px solid #ccc;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            padding: 12px;
+            z-index: 9999;
+            width: 260px;
+            font-size: 13px;
+            border-radius: 6px;
+        }
+
+        .menu-excel div.opcion-orden {
+            padding: 8px 6px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .menu-excel div.opcion-orden:hover {
+            background-color: #f1f5f9;
+        }
+
+        .lista-checkboxes {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            margin-top: 8px;
+            margin-bottom: 12px;
+            padding: 8px;
+            background: #fafafa;
+            border-radius: 4px;
+        }
+
+        .lista-checkboxes label {
+            display: block;
+            margin-bottom: 6px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .acciones-menu {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+        }
+
+        .acciones-menu button {
+            padding: 6px 14px;
+            font-size: 12px;
+        }
+
+        td[contenteditable="true"]:focus {
+            outline: 2px solid #007bff;
+            background-color: #ffffff;
+        }
+
+        input[type="date"], input[type="time"], select.celda-select, select.status-select {
             border: none;
+            background: transparent;
+            font-family: inherit;
+            font-size: 14px;
+            width: 100%;
+            cursor: pointer;
+        }
+
+        select.status-select {
+            font-weight: bold;
+        }
+
+        .acciones {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 10px 18px;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
             color: white;
             font-weight: bold;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-top: 10px;
         }
 
-        button[type="submit"]:hover {
-            background-color: #0056b3;
+        .btn-agregar { background-color: #28a745; }
+        .btn-eliminar { background-color: #dc3545; }
+        .btn-wa { background-color: #25d366; color: white; }
+        .btn-guardar { background-color: #007bff; }
+        .btn-limpiar { background-color: #ffc107; color: #333; }
+        .btn-regresar { background-color: #333; }
+
+        /* Contenedor Oculto para Generar Imagen */
+        #tarjetaVistaPrevia {
+            position: absolute;
+            top: -9999px;
+            left: -9999px;
+            width: 600px;
+            background: #102F27;
+            color: #FFFFFF;
+            padding: 30px;
+            border-radius: 14px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .bloque-tarjeta {
+            background: #185844;
+            padding: 22px;
+            border-radius: 10px;
+            border: 1px solid #78947F;
+        }
+
+        .bloque-tarjeta h2 {
+            margin: 0 0 16px 0;
+            text-align: center;
+            color: #F2EBDD;
+            border-bottom: 2px solid #78947F;
+            padding-bottom: 10px;
+            font-size: 27px;
+        }
+
+        .item-tarjeta {
+            display: flex;
+            justify-content: space-between;
+            padding: 9px 0;
+            border-bottom: 1px dashed #78947F;
+            font-size: 21px;
+        }
+
+        .item-tarjeta:last-child {
+            border-bottom: none;
+        }
+
+        .item-tarjeta span.etiqueta {
+            color: #FFFFFF;
+            font-weight: bold;
+        }
+
+        .item-tarjeta span.valor {
+            font-weight: bold;
+            color: #FFFFFF;
+            text-align: right;
+            white-space: pre-wrap;
+        }
+
+        /* Modal Interactivo */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-box {
+            background: white;
+            padding: 24px;
+            border-radius: 10px;
+            max-width: 380px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-box h3 {
+            margin-top: 0;
+            color: #1e293b;
+            font-size: 18px;
+        }
+
+        .modal-box p {
+            color: #64748b;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .modal-botones {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .btn-opcion {
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            color: white;
+        }
+
+        .btn-equipo { background-color: #0f172a; }
+        .btn-equipo:hover { background-color: #1e293b; }
+
+        .btn-comensal { background-color: #25d366; }
+        .btn-comensal:hover { background-color: #1fa855; }
+
+        .btn-cancelar-modal {
+            background: transparent;
+            border: none;
+            color: #64748b;
+            font-size: 13px;
+            cursor: pointer;
+            text-decoration: underline;
         }
     </style>
 </head>
 <body>
 
-<div class="login-card">
-    <form onsubmit="validarLogin(event)">
-        <div class="form-group">
-            <label for="usuario">Usuario:</label>
-            <input type="text" id="usuario" required>
-        </div>
+    <h1>Registro de Reservaciones (<span id="nombreUsuarioTitulo">Cargando...</span>)</h1>
 
-        <div class="form-group">
-            <label for="password">Contraseña:</label>
-            <div class="password-container">
-                <input type="password" id="password" required>
-                <button type="button" class="toggle-btn" id="togglePasswordBtn" onclick="togglePassword()">
-                    <svg id="eyeIcon" viewBox="0 0 24 24">
-                        <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
-                    </svg>
-                </button>
+    <!-- Control de Vistas -->
+    <div class="contenedor-vistas">
+        <label for="selectorVista">Vista de tabla:</label>
+        <select id="selectorVista" onchange="cambiarVista(this.value)">
+            <option value="basico" selected>Básico</option>
+            <option value="general">General</option>
+            <option value="anticipos">Anticipos</option>
+        </select>
+    </div>
+
+    <div class="contenedor-tabla">
+        <table id="tablaReservas">
+            <thead>
+                <tr id="encabezadosTabla">
+                    <!-- Encabezados dinámicos -->
+                </tr>
+            </thead>
+            <tbody id="cuerpoTabla">
+            </tbody>
+        </table>
+
+        <!-- Menú Flotante Filtro Excel -->
+        <div id="menuExcel" class="menu-excel">
+            <div class="opcion-orden" onclick="ordenarColumna('ASC')">
+                <span>▲</span> Ordenar de menor a mayor
+            </div>
+            <div class="opcion-orden" onclick="ordenarColumna('DESC')">
+                <span>▼</span> Ordenar de mayor a menor
+            </div>
+            <hr style="margin: 8px 0; border: 0; border-top: 1px solid #eee;">
+            <div style="font-weight: bold; font-size: 11px; color: #666; margin-top: 4px;">SELECCIONAR VALORES:</div>
+            
+            <div class="lista-checkboxes" id="contenedorCheckboxes">
+            </div>
+
+            <div class="acciones-menu">
+                <button type="button" class="btn-guardar" onclick="aplicarFiltrosExcel()">Aplicar</button>
+                <button type="button" class="btn-regresar" onclick="cerrarMenu()">Cancelar</button>
             </div>
         </div>
+    </div>
 
-        <button type="submit">Entrar</button>
-    </form>
-</div>
+    <div class="acciones">
+        <button type="button" class="btn-agregar" id="btnAgregarFila" onclick="agregarFila()">+ Agregar Fila</button>
+        <button type="button" class="btn-eliminar" id="btnEliminarFilas" onclick="eliminarFilasSeleccionadas()">Eliminar Filas</button>
+        <button type="button" class="btn-wa" id="btnEnviarWA" onclick="preguntarDestinatarioWA()">📲 Enviar por WhatsApp</button>
+        <button type="button" class="btn-guardar" onclick="guardarTabla(true)">Guardar Cambios</button>
+        <button type="button" class="btn-limpiar" onclick="limpiarFiltros()">Quitar Filtros</button>
+        <button type="button" class="btn-regresar" onclick="regresar()">Volver al menú</button>
+    </div>
 
-<script>
-const eyeOpenPath = "M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z";
-const eyeClosedPath = "M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.44-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.17c0-1.66-1.34-3-3-3l-.17.02z";
+    <!-- Oculto: Tarjeta previa para html2canvas -->
+    <div id="tarjetaVistaPrevia"></div>
 
-function validarLogin(event) {
-    event.preventDefault();
+    <!-- Ventana Modal de Selección -->
+    <div id="modalDestinatario" class="modal-overlay">
+        <div class="modal-box">
+            <h3>¿Para quién es la imagen?</h3>
+            <p>Selecciona una opción para generar el formato correspondiente:</p>
+            <div class="modal-botones">
+                <button type="button" class="btn-opcion btn-equipo" onclick="seleccionarOpcionWA('equipo')">👥 Equipo de trabajo</button>
+                <button type="button" class="btn-opcion btn-comensal" onclick="seleccionarOpcionWA('comensal')">🍽️ Comensal</button>
+            </div>
+            <button type="button" class="btn-cancelar-modal" onclick="cerrarModalDestinatario()">Cancelar</button>
+        </div>
+    </div>
 
-    var usuarioInput = document.getElementById("usuario").value.trim().toLowerCase();
-    var passwordInput = document.getElementById("password").value.trim();
-
-    var credenciales = {
-        "perla": "1234",
-        "quijote": "q0000"
+    <script>
+    // Inicialización de Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyCI5yWdLu1Z3XJ-94KwU3qaEU3vCA5sZOQ",
+        authDomain: "reservaciones-quijote.firebaseapp.com",
+        databaseURL: "https://reservaciones-quijote-default-rtdb.firebaseio.com",
+        projectId: "reservaciones-quijote",
+        storageBucket: "reservaciones-quijote.firebasestorage.app",
+        messagingSenderId: "455456029270",
+        appId: "1:455456029270:web:f2b28b6c1ac5bb4a4f59f7",
+        measurementId: "G-B0BMD25W5N"
     };
 
-    if (credenciales[usuarioInput] && credenciales[usuarioInput] === passwordInput) {
-        localStorage.setItem("usuarioActual", usuarioInput);
-        window.location.href = "pruebas.html?user=" + encodeURIComponent(usuarioInput);
-    } else {
-        alert("Usuario o contraseña incorrectos.");
-    }
-}
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-function togglePassword() {
-    const passwordInput = document.getElementById('password');
-    const pathElement = document.querySelector('#eyeIcon path');
+    var columnas = [
+        "", "Nombre", "Apellido", "Fecha", "Día", "Hora", 
+        "Menú", "#phone", "#p", "Área", "Status", 
+        "Cantidad Anticipo", "Vía Anticipo", 
+        "Comentarios para Cocina", "Comentarios para Meseros", "Comentarios para Barra",
+        "Responsable", "Pin", "Alta Traspasos", "Retorno de anticipo"
+    ];
 
-    if (passwordInput.type === 'password') {
-        passwordInput.type = 'text';
-        pathElement.setAttribute('d', eyeClosedPath);
-    } else {
-        passwordInput.type = 'password';
-        pathElement.setAttribute('d', eyeOpenPath);
+    var columnaActual = null;
+    var filtrosSeleccionados = {};
+
+    function obtenerUsuarioActual() {
+        var urlParams = new URLSearchParams(window.location.search);
+        var usuarioUrl = urlParams.get('user') || urlParams.get('usuario');
+        
+        if (usuarioUrl) {
+            localStorage.setItem("usuarioActual", usuarioUrl);
+            return usuarioUrl;
+        }
+
+        var usuarioStorage = localStorage.getItem("usuarioActual");
+        if (usuarioStorage) {
+            return usuarioStorage;
+        }
+
+        var path = window.location.pathname.toLowerCase();
+        if (path.includes("quijote")) return "quijote";
+        if (path.includes("perla")) return "perla";
+        if (path.includes("mesero")) return "mesero";
+
+        window.location.href = "index.html";
+        return null;
     }
-}
-</script>
+
+    function esUsuarioMesero() {
+        var usuario = (obtenerUsuarioActual() || "").toLowerCase();
+        return usuario.includes("mesero");
+    }
+
+    function obtenerClaveUsuario() {
+        var usuarioActivo = obtenerUsuarioActual();
+        return usuarioActivo ? "tablaReservasDatos_" + usuarioActivo : null;
+    }
+
+    window.onload = function() {
+        var usuarioActivo = obtenerUsuarioActual();
+        if (!usuarioActivo) return;
+
+        document.getElementById("nombreUsuarioTitulo").textContent = usuarioActivo;
+
+        evaluarPermisosBotones();
+
+        generarEncabezados();
+        
+        var claveStorage = obtenerClaveUsuario();
+        if (claveStorage) {
+            db.ref(claveStorage).on('value', function(snapshot) {
+                var reservas = snapshot.val();
+                if (reservas) {
+                    renderizarTabla(reservas);
+                } else {
+                    var datosLocales = JSON.parse(localStorage.getItem(claveStorage)) || [];
+                    renderizarTabla(datosLocales);
+                }
+                var vistaActual = document.getElementById("selectorVista").value;
+                cambiarVista(vistaActual);
+            });
+        }
+
+        document.addEventListener("click", function(e) {
+            var menu = document.getElementById("menuExcel");
+            if (menu.style.display === "block" && !menu.contains(e.target) && !e.target.classList.contains("btn-filtro")) {
+                cerrarMenu();
+            }
+        });
+    };
+
+    function evaluarPermisosBotones() {
+        var btnEliminar = document.getElementById("btnEliminarFilas");
+        var btnWA = document.getElementById("btnEnviarWA");
+        var btnAgregar = document.getElementById("btnAgregarFila");
+        var vistaActual = (document.getElementById("selectorVista") ? document.getElementById("selectorVista").value : "").toLowerCase();
+        
+        // 1. Eliminar filas
+        if (esUsuarioMesero() || vistaActual === "basico" || vistaActual === "anticipos") {
+            btnEliminar.style.display = "none";
+        } else {
+            btnEliminar.style.display = "inline-block";
+        }
+
+        // 2. Enviar por WhatsApp
+        if (esUsuarioMesero() || vistaActual === "basico") {
+            btnWA.style.display = "none";
+        } else {
+            btnWA.style.display = "inline-block";
+        }
+
+        // 3. Agregar fila
+        if (vistaActual === "anticipos") {
+            btnAgregar.style.display = "none";
+        } else {
+            btnAgregar.style.display = "inline-block";
+        }
+    }
+
+    function cambiarVista(vista) {
+        var tabla = document.getElementById("tablaReservas");
+        var filas = tabla.rows;
+
+        var ocultarPorVista = {
+            "general": [],
+            "basico": [7, 19],
+            "anticipos": [6, 13, 14, 15]
+        };
+
+        var columnasAOcultar = ocultarPorVista[vista] || [];
+
+        for (var i = 0; i < filas.length; i++) {
+            var celdas = filas[i].children;
+            for (var j = 0; j < celdas.length; j++) {
+                if (columnasAOcultar.includes(j)) {
+                    celdas[j].classList.add("columna-oculta");
+                } else {
+                    celdas[j].classList.remove("columna-oculta");
+                }
+            }
+        }
+
+        evaluarPermisosBotones();
+    }
+
+    function capitalizarPrimerLetra(texto) {
+        if (!texto) return "";
+        return texto.charAt(0).toUpperCase() + texto.slice(1);
+    }
+
+    function formatearDineroSinDecimales(valor) {
+        if (!valor) return "";
+        var numeroLimpio = valor.toString().replace(/[^0-9]/g, '');
+        if (numeroLimpio === "") return "";
+        
+        var numero = parseInt(numeroLimpio, 10);
+        return "$ " + numero.toLocaleString('es-MX');
+    }
+
+    function manejarEnter(e, celda) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            this.blur();
+            var siguienteCelda = celda.nextElementSibling;
+            if (siguienteCelda) {
+                var elementoFoco = siguienteCelda.querySelector('input, select') || siguienteCelda;
+                if (elementoFoco) elementoFoco.focus();
+            }
+        }
+    }
+
+    function generarPINUnico() {
+        var tbody = document.getElementById("cuerpoTabla");
+        var pinesExistentes = new Set();
+
+        if (tbody) {
+            for (var i = 0; i < tbody.rows.length; i++) {
+                var celdaPin = tbody.rows[i].cells[17];
+                if (celdaPin) {
+                    var valPin = celdaPin.innerText.trim();
+                    if (valPin) pinesExistentes.add(valPin);
+                }
+            }
+        }
+
+        var nuevoPin = "";
+        do {
+            nuevoPin = Math.floor(1000 + Math.random() * 9000).toString();
+        } while (pinesExistentes.has(nuevoPin));
+
+        return nuevoPin;
+    }
+
+    function generarEncabezados() {
+        var tr = document.getElementById("encabezadosTabla");
+        tr.innerHTML = "";
+        columnas.forEach(function(col, idx) {
+            var th = document.createElement("th");
+            
+            if (idx === 0) {
+                th.innerHTML = '<input type="checkbox" onchange="marcarTodasLasFilas(this)">';
+                th.style.textAlign = "center";
+            } else {
+                var div = document.createElement("div");
+                div.className = "th-header";
+                
+                var span = document.createElement("span");
+                span.innerText = col;
+
+                var btn = document.createElement("button");
+                btn.className = "btn-filtro";
+                btn.innerText = "▼";
+                btn.onclick = function(e) { abrirMenuExcel(e, idx); };
+
+                div.appendChild(span);
+                div.appendChild(btn);
+                th.appendChild(div);
+            }
+            tr.appendChild(th);
+        });
+    }
+
+    function renderizarTabla(reservas) {
+        var tbody = document.getElementById("cuerpoTabla");
+        tbody.innerHTML = "";
+
+        reservas.forEach(function(filaData) {
+            crearFilaHTML(filaData);
+        });
+    }
+
+    function crearFilaHTML(datos) {
+        var tbody = document.getElementById("cuerpoTabla");
+        var nuevaFila = tbody.insertRow();
+
+        var celdaCheck = nuevaFila.insertCell(0);
+        celdaCheck.innerHTML = '<input type="checkbox" class="chk-fila">';
+        celdaCheck.style.textAlign = "center";
+
+        for (var i = 1; i < 20; i++) {
+            var celda = nuevaFila.insertCell(i);
+            var valor = datos ? datos[i - 1] : "";
+
+            if (i === 3) {
+                celda.innerHTML = '<input type="date" value="' + valor + '" onchange="actualizarDia(this); guardarTabla();">';
+            } else if (i === 4) {
+                celda.innerText = capitalizarPrimerLetra(valor);
+                celda.style.backgroundColor = "#f0f0f0";
+            } else if (i === 5) {
+                celda.innerHTML = '<input type="time" value="' + valor + '" onchange="actualizarMenu(this); guardarTabla();">';
+            } else if (i === 6) {
+                celda.innerText = valor;
+                celda.style.backgroundColor = "#f0f0f0";
+            } else if (i === 9) {
+                var areaVal = valor || "";
+                celda.innerHTML = 
+                    '<select class="celda-select" onchange="guardarTabla();">' +
+                        '<option value=""' + (areaVal === '' ? ' selected' : '') + '></option>' +
+                        '<option value="Salón"' + (areaVal === 'Salón' ? ' selected' : '') + '>Salón</option>' +
+                        '<option value="P. Grande"' + (areaVal === 'P. Grande' ? ' selected' : '') + '>P. Grande</option>' +
+                        '<option value="P. Chico 1"' + (areaVal === 'P. Chico 1' ? ' selected' : '') + '>P. Chico 1</option>' +
+                        '<option value="P. Chico 2"' + (areaVal === 'P. Chico 2' ? ' selected' : '') + '>P. Chico 2</option>' +
+                        '<option value="Terraza"' + (areaVal === 'Terraza' ? ' selected' : '') + '>Terraza</option>' +
+                    '</select>';
+            } else if (i === 10) {
+                var statusVal = valor || "";
+                var estiloStatus = obtenerColorStatus(statusVal);
+                celda.style.backgroundColor = estiloStatus.bg;
+                celda.innerHTML = 
+                    '<select class="status-select" style="background-color:' + estiloStatus.bg + '; color:' + estiloStatus.color + ';" onchange="cambiarColor(this); guardarTabla();">' +
+                    '<option value=""' + (statusVal === '' ? ' selected' : '') + '></option>' +
+                    '<option value="Pendiente"' + (statusVal === 'Pendiente' ? ' selected' : '') + '>Pendiente</option>' +
+                    '<option value="Confirmado"' + (statusVal === 'Confirmado' ? ' selected' : '') + '>Confirmado</option>' +
+                    '<option value="Cancelado"' + (statusVal === 'Cancelado' ? ' selected' : '') + '>Cancelado</option>' +
+                    '<option value="Terminado"' + (statusVal === 'Terminado' ? ' selected' : '') + '>Terminado</option>' +
+                '</select>';
+            } else if (i === 11) {
+                celda.contentEditable = "true";
+                celda.innerText = formatearDineroSinDecimales(valor);
+                celda.onkeydown = function(e) { manejarEnter(e, celda); };
+                celda.onblur = function() {
+                    this.innerText = formatearDineroSinDecimales(this.innerText);
+                    guardarTabla();
+                };
+            } else if (i === 12) {
+                var viaVal = valor || "";
+                celda.innerHTML = 
+                    '<select class="celda-select" onchange="guardarTabla();">' +
+                        '<option value=""' + (viaVal === '' ? ' selected' : '') + '></option>' +
+                        '<option value="Efectivo"' + (viaVal === 'Efectivo' ? ' selected' : '') + '>Efectivo</option>' +
+                        '<option value="Tarjeta"' + (viaVal === 'Tarjeta' ? ' selected' : '') + '>Tarjeta</option>' +
+                        '<option value="Transferencia"' + (viaVal === 'Transferencia' ? ' selected' : '') + '>Transferencia</option>' +
+                        '<option value="Otros"' + (viaVal === 'Otros' ? ' selected' : '') + '>Otros</option>' +
+                        '<option value="No requerido"' + (viaVal === 'No requerido' ? ' selected' : '') + '>No requerido</option>' +
+                    '</select>';
+            } else if (i === 17) {
+                var pinVal = valor || generarPINUnico();
+                celda.innerText = pinVal;
+                celda.style.backgroundColor = "#f0f0f0";
+            } else if (i === 18) {
+                var altaVal = valor || "";
+                celda.innerHTML = 
+                    '<select class="celda-select" onchange="guardarTabla();">' +
+                        '<option value=""' + (altaVal === '' ? ' selected' : '') + '></option>' +
+                        '<option value="Pendiente"' + (altaVal === 'Pendiente' ? ' selected' : '') + '>Pendiente</option>' +
+                        '<option value="Realizado"' + (altaVal === 'Realizado' ? ' selected' : '') + '>Realizado</option>' +
+                        '<option value="No requerido"' + (altaVal === 'No requerido' ? ' selected' : '') + '>No requerido</option>' +
+                    '</select>';
+            } else if (i === 19) {
+                var retornoVal = valor || "";
+                celda.innerHTML = 
+                    '<select class="celda-select" onchange="guardarTabla();">' +
+                        '<option value=""' + (retornoVal === '' ? ' selected' : '') + '></option>' +
+                        '<option value="Pendiente"' + (retornoVal === 'Pendiente' ? ' selected' : '') + '>Pendiente</option>' +
+                        '<option value="Realizado"' + (retornoVal === 'Realizado' ? ' selected' : '') + '>Realizado</option>' +
+                        '<option value="No requerido"' + (retornoVal === 'No requerido' ? ' selected' : '') + '>No requerido</option>' +
+                    '</select>';
+            } else if (i === 13 || i === 14 || i === 15) {
+                celda.contentEditable = "true";
+                celda.innerText = valor || "";
+                celda.onblur = function() { guardarTabla(); };
+            } else {
+                celda.contentEditable = "true";
+                celda.innerText = valor || "";
+                celda.onkeydown = function(e) { manejarEnter(e, celda); };
+                celda.onblur = function() { guardarTabla(); };
+            }
+        }
+    }
+
+    function formatearHora12h(hora24) {
+        if (!hora24) return "-";
+        var partes = hora24.split(":");
+        if (partes.length < 2) return hora24;
+
+        var horas = parseInt(partes[0], 10);
+        var minutos = partes[1];
+        var ampm = horas >= 12 ? "PM" : "AM";
+
+        horas = horas % 12;
+        horas = horas ? horas : 12;
+        var horasStr = horas < 10 ? "0" + horas : horas;
+
+        return horasStr + ":" + minutos + " " + ampm;
+    }
+
+    function obtenerFechaFormateada(fechaIso) {
+        if (!fechaIso) return "-";
+        var partes = fechaIso.split("-");
+        if (partes.length < 3) return fechaIso;
+
+        var fechaObj = new Date(partes[0], partes[1] - 1, partes[2]);
+        var diasSemana = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+        var meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+
+        var diaSemana = diasSemana[fechaObj.getDay()];
+        var diaNumero = fechaObj.getDate();
+        var mesNombre = meses[fechaObj.getMonth()];
+
+        return diaSemana + " " + diaNumero + " de " + mesNombre;
+    }
+
+    function preguntarDestinatarioWA() {
+        var vistaActual = (document.getElementById("selectorVista") ? document.getElementById("selectorVista").value : "").toLowerCase();
+        if (esUsuarioMesero() || vistaActual === "basico") {
+            alert("No tienes permisos autorizados para enviar por WhatsApp.");
+            return;
+        }
+
+        var seleccionados = document.querySelectorAll(".chk-fila:checked");
+        if (seleccionados.length === 0) {
+            alert("Por favor, selecciona al menos una reservación para generar la tarjeta.");
+            return;
+        }
+
+        document.getElementById("modalDestinatario").style.display = "flex";
+    }
+
+    function seleccionarOpcionWA(tipo) {
+        cerrarModalDestinatario();
+        generarImagenWhatsApp(tipo);
+    }
+
+    function cerrarModalDestinatario() {
+        document.getElementById("modalDestinatario").style.display = "none";
+    }
+
+    async function generarImagenWhatsApp(tipoDestinatario) {
+        var seleccionados = Array.from(document.querySelectorAll(".chk-fila:checked"));
+
+        var contenedorTarjeta = document.getElementById("tarjetaVistaPrevia");
+        contenedorTarjeta.innerHTML = ""; 
+
+        var primerTelefono = "";
+
+        seleccionados.forEach(function(chk, index) {
+            var fila = chk.parentElement.parentElement;
+
+            var nombre = obtenerValorCelda(fila.cells[1], 1);
+            var apellido = obtenerValorCelda(fila.cells[2], 2);
+            var fechaIso = obtenerValorCelda(fila.cells[3], 3);
+            var diaFormateado = obtenerFechaFormateada(fechaIso);
+            var horaBruta = obtenerValorCelda(fila.cells[5], 5);
+            var hora = formatearHora12h(horaBruta);
+            var menu = obtenerValorCelda(fila.cells[6], 6);
+            var phone = obtenerValorCelda(fila.cells[7], 7).replace(/\D/g, '');
+            var personas = obtenerValorCelda(fila.cells[8], 8);
+            var area = obtenerValorCelda(fila.cells[9], 9);
+            var status = obtenerValorCelda(fila.cells[10], 10);
+            var cantAnticipo = obtenerValorCelda(fila.cells[11], 11);
+            var viaAnticipo = obtenerValorCelda(fila.cells[12], 12);
+            var comCocina = obtenerValorCelda(fila.cells[13], 13);
+            var comMeseros = obtenerValorCelda(fila.cells[14], 14);
+            var comBarra = obtenerValorCelda(fila.cells[15], 15);
+            var pin = obtenerValorCelda(fila.cells[17], 17);
+
+            if (index === 0 && phone) {
+                primerTelefono = phone;
+            }
+
+            var areaFormateada = area ? area.replace(/^P\.\s*/, "Privado ") : "-";
+
+            var etiquetaUltimoCampo = "Estado:";
+            var valorUltimoCampo = status || "-";
+
+            var tieneAnticipo = cantAnticipo && cantAnticipo.trim() !== "";
+
+            if (tipoDestinatario === "comensal") {
+                etiquetaUltimoCampo = "Anticipo:";
+                if (tieneAnticipo) {
+                    valorUltimoCampo = cantAnticipo + (viaAnticipo ? " (" + viaAnticipo + ")" : "");
+                } else {
+                    valorUltimoCampo = "Pendiente";
+                }
+            }
+
+            // Bloque dinámico para notas de equipo
+            var htmlNotasEquipo = '';
+            if (tipoDestinatario === "equipo") {
+                if (comCocina && comCocina.trim() !== "") {
+                    htmlNotasEquipo += '<div class="item-tarjeta"><span class="etiqueta">Cocina:</span><span class="valor">' + comCocina + '</span></div>';
+                }
+                if (comMeseros && comMeseros.trim() !== "") {
+                    htmlNotasEquipo += '<div class="item-tarjeta"><span class="etiqueta">Meseros:</span><span class="valor">' + comMeseros + '</span></div>';
+                }
+                if (comBarra && comBarra.trim() !== "") {
+                    htmlNotasEquipo += '<div class="item-tarjeta"><span class="etiqueta">Barra:</span><span class="valor">' + comBarra + '</span></div>';
+                }
+            }
+
+            // Bloque dinámico exclusivo para comensal (solo si tiene anticipo registrado)
+            var htmlComensalPin = '';
+            if (tipoDestinatario === "comensal" && tieneAnticipo) {
+                htmlComensalPin = 
+                    '<div class="item-tarjeta"><span class="etiqueta">PIN:</span><span class="valor">' + (pin || "-") + '</span></div>' +
+                    '<div style="text-align: center; margin-top: 14px; font-size: 15px; color: #F2EBDD; font-style: italic;">' +
+                        'Pin de seguridad. No compartir.' +
+                    '</div>';
+            }
+
+            var bloque = document.createElement("div");
+            bloque.className = "bloque-tarjeta";
+            bloque.innerHTML = 
+                '<h2>Detalle de Reservación #' + (index + 1) + '</h2>' +
+                '<div class="item-tarjeta"><span class="etiqueta">Cliente:</span><span class="valor">' + nombre + ' ' + apellido + '</span></div>' +
+                '<div class="item-tarjeta"><span class="etiqueta">Número de personas:</span><span class="valor">' + (personas || "1") + '</span></div>' +
+                '<div class="item-tarjeta"><span class="etiqueta">Día:</span><span class="valor">' + diaFormateado + '</span></div>' +
+                '<div class="item-tarjeta"><span class="etiqueta">Hora:</span><span class="valor">' + hora + '</span></div>' +
+                '<div class="item-tarjeta"><span class="etiqueta">Menú:</span><span class="valor">' + (menu || "-") + '</span></div>' +
+                '<div class="item-tarjeta"><span class="etiqueta">Área:</span><span class="valor">' + areaFormateada + '</span></div>' +
+                '<div class="item-tarjeta"><span class="etiqueta">' + etiquetaUltimoCampo + '</span><span class="valor">' + valorUltimoCampo + '</span></div>' +
+                htmlNotasEquipo +
+                htmlComensalPin;
+
+            contenedorTarjeta.appendChild(bloque);
+        });
+
+        if (primerTelefono.length === 10) {
+            primerTelefono = "52" + primerTelefono;
+        }
+
+        const canvas = await html2canvas(contenedorTarjeta);
+        var enlace = document.createElement("a");
+        enlace.download = "Reservaciones_" + tipoDestinatario.toUpperCase() + ".png";
+        enlace.href = canvas.toDataURL("image/png");
+        enlace.click();
+
+        canvas.toBlob(async function(blob) {
+            try {
+                await navigator.clipboard.write([
+                    new ClipboardItem({ [blob.type]: blob })
+                ]);
+                alert("¡Imagen lista (" + tipoDestinatario + ") y copiada al portapapeles!\nPresiona Ctrl + V en WhatsApp Web.");
+            } catch (err) {
+                console.log("No se pudo copiar automáticamente al portapapeles.");
+            }
+        });
+
+        var mensaje = "Buen día, adjunto comprobante con el resumen de su reservación.";
+        var urlWA = primerTelefono 
+            ? "https://web.whatsapp.com/send?phone=" + primerTelefono + "&text=" + encodeURIComponent(mensaje)
+            : "https://web.whatsapp.com/";
+
+        window.open(urlWA, "_blank");
+    }
+
+    function actualizarDia(inputFecha) {
+        var fechaVal = inputFecha.value;
+        var fila = inputFecha.parentElement.parentElement;
+        var celdaDia = fila.cells[4];
+
+        if (!fechaVal) {
+            celdaDia.innerText = "";
+            return;
+        }
+
+        var partes = fechaVal.split("-");
+        var fechaObj = new Date(partes[0], partes[1] - 1, partes[2]);
+        var diasSemana = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+        celdaDia.innerText = diasSemana[fechaObj.getDay()];
+    }
+
+    function actualizarMenu(inputHora) {
+        var horaVal = inputHora.value;
+        var fila = inputHora.parentElement.parentElement;
+        var celdaMenu = fila.cells[6];
+
+        if (!horaVal) {
+            celdaMenu.innerText = "";
+            return;
+        }
+
+        var horaInt = parseInt(horaVal.split(":")[0], 10);
+
+        if (horaInt < 14) {
+            celdaMenu.innerText = "Desayuno";
+        } else {
+            celdaMenu.innerText = "Comida/cena";
+        }
+    }
+
+    function marcarTodasLasFilas(source) {
+        var checkboxes = document.querySelectorAll(".chk-fila");
+        checkboxes.forEach(function(chk) { chk.checked = source.checked; });
+    }
+
+    function eliminarFilasSeleccionadas() {
+        var vistaActual = (document.getElementById("selectorVista") ? document.getElementById("selectorVista").value : "").toLowerCase();
+        
+        if (esUsuarioMesero() || vistaActual === "basico" || vistaActual === "anticipos") {
+            alert("No tienes permisos autorizados para eliminar filas.");
+            return;
+        }
+
+        var checkboxes = document.querySelectorAll(".chk-fila:checked");
+
+        if (checkboxes.length === 0) {
+            alert("Por favor, selecciona al menos una fila marcando la casilla de la izquierda.");
+            return;
+        }
+
+        var confirmacion = confirm("¿Seguro que desea eliminar las filas seleccionadas?");
+        if (confirmacion) {
+            checkboxes.forEach(function(chk) {
+                var fila = chk.parentElement.parentElement;
+                fila.parentElement.removeChild(fila);
+            });
+            guardarTabla();
+        }
+    }
+
+    function abrirMenuExcel(e, colIndex) {
+        e.stopPropagation();
+        columnaActual = colIndex;
+
+        var menu = document.getElementById("menuExcel");
+        var btn = e.target;
+        var rect = btn.getBoundingClientRect();
+
+        menu.style.display = "block";
+        menu.style.top = (rect.bottom + 4) + "px";
+        
+        var leftPos = rect.left - 180;
+        if (leftPos < 10) leftPos = 10;
+        menu.style.left = leftPos + "px";
+
+        poblarCheckboxes(colIndex);
+    }
+
+    function cerrarMenu() {
+        document.getElementById("menuExcel").style.display = "none";
+    }
+
+    function poblarCheckboxes(colIndex) {
+        var tbody = document.getElementById("cuerpoTabla");
+        var valores = new Set();
+
+        for (var i = 0; i < tbody.rows.length; i++) {
+            var val = obtenerValorCelda(tbody.rows[i].cells[colIndex], colIndex);
+            valores.add(val || "(Vacías)");
+        }
+
+        var contenedor = document.getElementById("contenedorCheckboxes");
+        contenedor.innerHTML = "";
+
+        var labelTodo = document.createElement("label");
+        labelTodo.innerHTML = '<input type="checkbox" id="chkTodos" checked onchange="marcarTodos(this)"> <b>(Seleccionar todo)</b>';
+        contenedor.appendChild(labelTodo);
+
+        var seleccionadosPreviamente = filtrosSeleccionados[colIndex];
+
+        valores.forEach(function(val) {
+            var isChecked = !seleccionadosPreviamente || seleccionadosPreviamente.includes(val);
+            var label = document.createElement("label");
+            label.innerHTML = '<input type="checkbox" class="chk-item" value="' + val + '" ' + (isChecked ? 'checked' : '') + '> ' + val;
+            contenedor.appendChild(label);
+        });
+    }
+
+    function marcarTodos(source) {
+        var checkboxes = document.querySelectorAll(".chk-item");
+        checkboxes.forEach(function(chk) { chk.checked = source.checked; });
+    }
+
+    function aplicarFiltrosExcel() {
+        var checkboxes = document.querySelectorAll(".chk-item");
+        var seleccionados = [];
+
+        checkboxes.forEach(function(chk) {
+            if (chk.checked) seleccionados.push(chk.value);
+        });
+
+        filtrosSeleccionados[columnaActual] = seleccionados;
+
+        var tbody = document.getElementById("cuerpoTabla");
+
+        for (var i = 0; i < tbody.rows.length; i++) {
+            var fila = tbody.rows[i];
+            var mostrar = true;
+
+            for (var col = 1; col < 20; col++) {
+                if (filtrosSeleccionados[col]) {
+                    var valCelda = obtenerValorCelda(fila.cells[col], col) || "(Vacías)";
+                    if (!filtrosSeleccionados[col].includes(valCelda)) {
+                        mostrar = false;
+                        break;
+                    }
+                }
+            }
+            fila.style.display = mostrar ? "" : "none";
+        }
+
+        cerrarMenu();
+    }
+
+    function ordenarColumna(direccion) {
+        var tbody = document.getElementById("cuerpoTabla");
+        var filas = Array.from(tbody.rows);
+
+        filas.sort(function(a, b) {
+            var valA = obtenerValorCelda(a.cells[columnaActual], columnaActual).toLowerCase();
+            var valB = obtenerValorCelda(b.cells[columnaActual], columnaActual).toLowerCase();
+
+            if (valA < valB) return direccion === 'ASC' ? -1 : 1;
+            if (valA > valB) return direccion === 'ASC' ? 1 : -1;
+            return 0;
+        });
+
+        filas.forEach(function(fila) { tbody.appendChild(fila); });
+        guardarTabla();
+        cerrarMenu();
+    }
+
+    function limpiarFiltros() {
+        filtrosSeleccionados = {};
+        var tbody = document.getElementById("cuerpoTabla");
+        for (var i = 0; i < tbody.rows.length; i++) {
+            tbody.rows[i].style.display = "";
+        }
+    }
+
+    function agregarFila() {
+        var vistaActual = (document.getElementById("selectorVista") ? document.getElementById("selectorVista").value : "").toLowerCase();
+        if (vistaActual === "anticipos") {
+            alert("No se permite agregar filas desde la vista de Anticipos.");
+            return;
+        }
+
+        crearFilaHTML(["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""]);
+        guardarTabla();
+        cambiarVista(vistaActual);
+    }
+
+    function cambiarColor(select) {
+        var celda = select.parentElement;
+        var estilo = obtenerColorStatus(select.value);
+        celda.style.backgroundColor = estilo.bg;
+        select.style.backgroundColor = estilo.bg;
+        select.style.color = estilo.color;
+    }
+
+    function obtenerColorStatus(valor) {
+        if (valor === "Confirmado") return { bg: "#C6EFCE", color: "#006100" };
+        if (valor === "Cancelado")  return { bg: "#FFC7CE", color: "#9C0006" };
+        if (valor === "Terminado")  return { bg: "#FFFFFF", color: "#375623" };
+        if (valor === "Pendiente")  return { bg: "#FFEB9C", color: "#9C6500" };
+        return { bg: "#FFFFFF", color: "#000000" };
+    }
+
+    function obtenerValorCelda(celda, indice) {
+        if (!celda) return "";
+        if (indice === 3 || indice === 5) {
+            var input = celda.querySelector("input");
+            return input ? input.value : "";
+        } else if (indice === 9 || indice === 10 || indice === 12 || indice === 18 || indice === 19) {
+            var select = celda.querySelector("select");
+            return select ? select.value : "";
+        } else {
+            return celda.innerText.trim();
+        }
+    }
+
+    function guardarTabla(alerta) {
+        var claveStorage = obtenerClaveUsuario();
+        if (!claveStorage) return;
+
+        var tbody = document.getElementById("cuerpoTabla");
+        var datosGuardar = [];
+
+        for (var i = 0; i < tbody.rows.length; i++) {
+            var fila = tbody.rows[i];
+            var filaData = [];
+
+            for (var j = 1; j < 20; j++) {
+                filaData.push(obtenerValorCelda(fila.cells[j], j));
+            }
+            datosGuardar.push(filaData);
+        }
+
+        localStorage.setItem(claveStorage, JSON.stringify(datosGuardar));
+
+        db.ref(claveStorage).set(datosGuardar)
+            .then(function() {
+                if (alerta === true) {
+                    alert("¡Cambios guardados con éxito en la nube!");
+                }
+            })
+            .catch(function(error) {
+                console.error("Error al guardar en Firebase:", error);
+                if (alerta === true) {
+                    alert("Guardado localmente. Revisa tu conexión a internet.");
+                }
+            });
+    }
+
+    function regresar() {
+        guardarTabla();
+        window.location.href = "index.html";
+    }
+    </script>
 
 </body>
 </html>
