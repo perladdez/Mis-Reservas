@@ -621,11 +621,14 @@
         '</select>';
 
 } else if (i === 13 || i === 14 || i === 15) {
-    // COMENTARIOS (Cocina, Meseros, Barra)
-    celda.contentEditable = "true";
-    celda.innerText = valor || "";
-    celda.onkeydown = function(e) { manejarEnter(e, celda); };
-    celda.onblur = function() { guardarTabla(); };
+         celda.contentEditable = "true";
+                celda.innerText = valor || "";
+                celda.onblur = function() { guardarTabla(); };
+            } else {
+                celda.contentEditable = "true";
+                celda.innerText = valor || "";
+                celda.onkeydown = function(e) { manejarEnter(e, celda); };
+                celda.onblur = function() { guardarTabla(); };
 }
             }
         }
