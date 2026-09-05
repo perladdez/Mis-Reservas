@@ -569,7 +569,7 @@ if (!urlParams.get('user') && usuarioGuardado) {
         celdaCheck.innerHTML = '<input type="checkbox" class="chk-fila">';
         celdaCheck.style.textAlign = "center";
 
-        for (var i = 1; i < 15; i++) {
+        for (var i = 1; i < 16; i++) {
             var celda = nuevaFila.insertCell(i);
             var valor = datos ? datos[i - 1] : "";
 
@@ -599,7 +599,7 @@ if (!urlParams.get('user') && usuarioGuardado) {
                 celda.style.backgroundColor = estiloStatus.bg;
                 celda.innerHTML = 
                    '<select class="celda-select" onchange="guardarTabla();">' +
-    '<option value="Efectivo"' + (viaVal === 'Efectivo' ? ' selected' : '') + '>Efectivo</option>' +
+    '<option value="Pendiente"' + (viaVal === 'Efectivo' ? ' selected' : '') + '>Efectivo</option>' +
     '<option value="Tarjeta"' + (viaVal === 'Tarjeta' ? ' selected' : '') + '>Tarjeta</option>' +
     '<option value="Transferencia"' + (viaVal === 'Transferencia' ? ' selected' : '') + '>Transferencia</option>' +
     '<option value="Otros"' + (viaVal === 'Otros' ? ' selected' : '') + '>Otros</option>' +
@@ -623,7 +623,7 @@ if (!urlParams.get('user') && usuarioGuardado) {
                         '<option value="Otros"' + (viaVal === 'Otros' ? ' selected' : '') + '>Otros</option>' +
                         '<option value="No requerido"' + (viaVal === 'No requerido' ? ' selected' : '') + '>No requerido</option>' +
                     '</select>';
-            } else if (i === 13 || i === 14) {
+            } else if (i === 13 || i === 14|| i === 15) {
                 celda.contentEditable = "true";
                 celda.innerText = valor || "";
                 celda.onblur = function() { guardarTabla(); };
@@ -713,6 +713,7 @@ if (!urlParams.get('user') && usuarioGuardado) {
             var viaAnticipo = obtenerValorCelda(fila.cells[12], 12);
             var comCocina = obtenerValorCelda(fila.cells[13], 13);
             var comMeseros = obtenerValorCelda(fila.cells[14], 14);
+            var comBarra = obtenerValorCelda(fila.cells[15], 15);
 
             if (index === 0 && phone) {
                 primerTelefono = phone;
