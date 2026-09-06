@@ -625,7 +625,6 @@
         var filas = tabla.rows;
 
         // Ocultar columnas según la vista
-        // Columna 8: #phone, Columna 19: Alta Traspasos, Columna 20: Retorno de anticipo
         var ocultarPorVista = {
             "general": [],
             "nueva_reservacion": [19, 20],
@@ -783,12 +782,12 @@
             var valor = datos ? datos[i - 2] : "";
 
             if (i === 4) {
-                celda.innerHTML = '<input type="date" value="' + valor + '" onchange="actualizarDia(this); guardarTabla();">';
+                celda.innerHTML = '<input type="date" value="' + valor + '" oninput="actualizarDia(this);" onblur="validarYReordenar(this);">';
             } else if (i === 5) {
                 celda.innerText = capitalizarPrimerLetra(valor);
                 celda.style.backgroundColor = "#f0f0f0";
             } else if (i === 6) {
-                celda.innerHTML = '<input type="time" value="' + valor + '" onchange="actualizarMenu(this); guardarTabla();">';
+                celda.innerHTML = '<input type="time" value="' + valor + '" oninput="actualizarMenu(this);" onblur="validarYReordenar(this);">';
             } else if (i === 7) {
                 celda.innerText = valor;
                 celda.style.backgroundColor = "#f0f0f0";
@@ -867,6 +866,44 @@
                 celda.onblur = function() { guardarTabla(); };
             }
         }
+    }
+
+    // ===== VALIDACIÓN PREVIA AL REORDENAMIENTO =====
+    function validarYReordenar(input) {
+        if (input.type === "date" && input.value) {
+            var partes = input.value.split("-");
+            if (!partes[0] || partes[0].length < 4 || parseInt(partes[0], 10) < 1000) {
+                return;
+            }
+        }
+        reordenarPorFechaYHora();
+        guardarTabla();
+    }
+
+    // ===== FUNCIÓN PARA AUTO-ORDENAR AUTOMÁTICAMENTE POR FECHA Y HORA =====
+    function reordenarPorFechaYHora() {
+        var tbody = document.getElementById("cuerpoTabla");
+        var filas = Array.from(tbody.rows);
+
+        filas.sort(function(a, b) {
+            var fechaA = obtenerValorCelda(a.cells[4], 4) || "9999-99-99";
+            var fechaB = obtenerValorCelda(b.cells[4], 4) || "9999-99-99";
+
+            if (fechaA < fechaB) return -1;
+            if (fechaA > fechaB) return 1;
+
+            // Si las fechas son iguales, compara por la hora (Columna 6)
+            var horaA = obtenerValorCelda(a.cells[6], 6) || "99:99";
+            var horaB = obtenerValorCelda(b.cells[6], 6) || "99:99";
+
+            if (horaA < horaB) return -1;
+            if (horaA > horaB) return 1;
+
+            return 0;
+        });
+
+        // Reorganizar visualmente las filas en el DOM
+        filas.forEach(function(fila) { tbody.appendChild(fila); });
     }
 
     function formatearHora12h(hora24) {
