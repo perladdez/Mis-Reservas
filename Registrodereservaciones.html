@@ -19,12 +19,15 @@
             padding: 20px;
             margin: 0;
             background-color: #f8f9fa;
+            color: #333;
+            transition: background-color 0.3s, color 0.3s;
         }
 
         h1 {
             color: #333;
             text-align: center;
             margin-bottom: 20px;
+            transition: color 0.3s;
         }
 
         .contenedor-vistas {
@@ -36,12 +39,14 @@
             padding: 12px 16px;
             border-radius: 6px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: background-color 0.3s;
         }
 
         .contenedor-vistas label {
             font-weight: bold;
             color: #333;
             font-size: 14px;
+            transition: color 0.3s;
         }
 
         .contenedor-vistas select {
@@ -51,6 +56,25 @@
             font-size: 14px;
             background-color: #f8f9fa;
             cursor: pointer;
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+        }
+
+        /* Botón para cambiar de modo */
+        .btn-toggle-dark {
+            background-color: #334155;
+            color: #ffffff;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            margin-left: auto;
+            transition: background-color 0.2s;
+        }
+
+        .btn-toggle-dark:hover {
+            background-color: #475569;
         }
 
         .columna-oculta {
@@ -64,6 +88,7 @@
             border-radius: 6px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             position: relative;
+            transition: background-color 0.3s;
         }
 
         table {
@@ -72,6 +97,8 @@
             width: 100%;
             min-width: 1700px;
             font-size: 14px;
+            background-color: #ffffff;
+            transition: background-color 0.3s;
         }
 
         th, td {
@@ -81,6 +108,8 @@
             text-align: left;
             vertical-align: top;
             background-color: #ffffff;
+            color: #333;
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
         }
 
         /* ===== ESTILO PARA EL DRAG HANDLE (::) ===== */
@@ -189,6 +218,18 @@
             border-radius: 6px;
         }
 
+        .menu-excel input[type="text"],
+        .menu-excel input[type="search"] {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 6px 8px;
+            margin-top: 6px;
+            margin-bottom: 6px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
         .menu-excel div.opcion-orden {
             padding: 8px 6px;
             cursor: pointer;
@@ -245,6 +286,7 @@
             font-size: 14px;
             width: 100%;
             cursor: pointer;
+            color: inherit;
         }
 
         select.status-select {
@@ -355,6 +397,7 @@
             width: 90%;
             text-align: center;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: background-color 0.3s;
         }
 
         .modal-box h3 {
@@ -401,13 +444,139 @@
             cursor: pointer;
             text-decoration: underline;
         }
+
+        /* ========================================================= */
+        /* ===== ESTILOS PARA MODO OSCURO ===== */
+        /* ========================================================= */
+        body.dark-mode {
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+
+        body.dark-mode h1 {
+            color: #f8fafc;
+        }
+
+        body.dark-mode .contenedor-vistas {
+            background-color: #1e293b;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+        }
+
+        body.dark-mode .contenedor-vistas label {
+            color: #f8fafc;
+        }
+
+        body.dark-mode .contenedor-vistas select {
+            background-color: #334155;
+            color: #f8fafc;
+            border-color: #475569;
+        }
+
+        body.dark-mode .btn-toggle-dark {
+            background-color: #f8fafc;
+            color: #0f172a;
+        }
+
+        body.dark-mode .btn-toggle-dark:hover {
+            background-color: #e2e8f0;
+        }
+
+        body.dark-mode .contenedor-tabla {
+            background-color: #1e293b;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        }
+
+        body.dark-mode table {
+            background-color: #1e293b;
+        }
+
+        body.dark-mode th, 
+        body.dark-mode td {
+            background-color: #1e293b;
+            color: #f8fafc;
+            border-right-color: #334155;
+            border-bottom-color: #334155;
+        }
+
+        body.dark-mode th {
+            background-color: #334155;
+            color: #f8fafc;
+            border-top-color: #334155;
+        }
+
+        body.dark-mode thead th:nth-child(1),
+        body.dark-mode thead th:nth-child(2),
+        body.dark-mode thead th:nth-child(3),
+        body.dark-mode thead th:nth-child(4) {
+            background-color: #475569;
+        }
+
+        body.dark-mode td[style*="background-color: rgb(240, 240, 240)"],
+        body.dark-mode td[style*="background-color: #f0f0f0"] {
+            background-color: #334155 !important;
+        }
+
+        body.dark-mode input[type="date"], 
+        body.dark-mode input[type="time"], 
+        body.dark-mode select.celda-select {
+            color: #f8fafc;
+        }
+
+        body.dark-mode input[type="date"]::-webkit-calendar-picker-indicator,
+        body.dark-mode input[type="time"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+        }
+
+        body.dark-mode td[contenteditable="true"]:focus {
+            outline: 2px solid #38bdf8;
+            background-color: #0f172a;
+        }
+
+        body.dark-mode .menu-excel {
+            background-color: #1e293b;
+            border-color: #475569;
+            color: #f8fafc;
+        }
+
+        body.dark-mode .menu-excel input[type="text"],
+        body.dark-mode .menu-excel input[type="search"] {
+            background-color: #0f172a;
+            color: #f8fafc;
+            border: 1px solid #475569;
+        }
+
+        body.dark-mode .menu-excel input[type="text"]::placeholder,
+        body.dark-mode .menu-excel input[type="search"]::placeholder {
+            color: #94a3b8;
+        }
+
+        body.dark-mode .menu-excel div.opcion-orden:hover {
+            background-color: #334155;
+        }
+
+        body.dark-mode .lista-checkboxes {
+            background-color: #0f172a;
+            border-color: #475569;
+        }
+
+        body.dark-mode .modal-box {
+            background-color: #1e293b;
+        }
+
+        body.dark-mode .modal-box h3 {
+            color: #f8fafc;
+        }
+
+        body.dark-mode .modal-box p {
+            color: #cbd5e1;
+        }
     </style>
 </head>
 <body>
 
     <h1>Registro de Reservaciones (<span id="nombreUsuarioTitulo">Cargando...</span>)</h1>
 
-    <!-- Control de Vistas -->
+    <!-- Control de Vistas y Modo Oscuro -->
     <div class="contenedor-vistas">
         <label for="selectorVista">Vista de tabla:</label>
         <select id="selectorVista" onchange="cambiarVista(this.value)">
@@ -416,6 +585,9 @@
             <option value="anticipos">Anticipos</option>
             <option value="general">General</option>
         </select>
+        
+        <!-- Botón para alternar modo oscuro -->
+        <button id="btnModoOscuro" class="btn-toggle-dark" onclick="toggleModoOscuro()">🌙 Modo Oscuro</button>
     </div>
 
     <div class="contenedor-tabla">
@@ -438,7 +610,7 @@
                 <span>▼</span> Ordenar de mayor a menor
             </div>
             <hr style="margin: 8px 0; border: 0; border-top: 1px solid #eee;">
-            <div style="font-weight: bold; font-size: 11px; color: #666; margin-top: 4px;">SELECCIONAR VALORES:</div>
+            <div style="font-weight: bold; font-size: 11px; color: #888; margin-top: 4px;">SELECCIONAR VALORES:</div>
             
             <div class="lista-checkboxes" id="contenedorCheckboxes">
             </div>
@@ -503,6 +675,35 @@
     var filtrosSeleccionados = {};
     var sortableInstance = null;
 
+    // ===== LÓGICA DE MODO OSCURO =====
+    function toggleModoOscuro() {
+        document.body.classList.toggle("dark-mode");
+        var esOscuro = document.body.classList.contains("dark-mode");
+        localStorage.setItem("modoOscuro", esOscuro ? "activado" : "desactivado");
+        actualizarTextoBotonTema(esOscuro);
+
+        // Re-pintar las celdas de status para adaptar las vacías al cambio de tema
+        var selectsStatus = document.querySelectorAll("select.status-select");
+        selectsStatus.forEach(function(select) {
+            cambiarColor(select);
+        });
+    }
+
+    function actualizarTextoBotonTema(esOscuro) {
+        var btn = document.getElementById("btnModoOscuro");
+        if (btn) {
+            btn.innerText = esOscuro ? "☀️ Modo Claro" : "🌙 Modo Oscuro";
+        }
+    }
+
+    function cargarPreferenciasTema() {
+        var estadoTema = localStorage.getItem("modoOscuro");
+        if (estadoTema === "activado") {
+            document.body.classList.add("dark-mode");
+            actualizarTextoBotonTema(true);
+        }
+    }
+
     function obtenerUsuarioActual() {
         var urlParams = new URLSearchParams(window.location.search);
         var usuarioUrl = urlParams.get('user') || urlParams.get('usuario');
@@ -551,6 +752,8 @@
     }
 
     window.onload = function() {
+        cargarPreferenciasTema();
+        
         var usuarioActivo = obtenerUsuarioActual();
         if (!usuarioActivo) return;
 
@@ -624,7 +827,6 @@
         var tabla = document.getElementById("tablaReservas");
         var filas = tabla.rows;
 
-        // Ocultar columnas según la vista
         var ocultarPorVista = {
             "general": [],
             "nueva_reservacion": [19, 20],
@@ -645,7 +847,6 @@
             }
         }
 
-        // Modo solo lectura para vista "meseros"
         var esModoLectura = (vista === "meseros");
 
         if (sortableInstance) {
@@ -658,12 +859,10 @@
             for (var j = 2; j < fila.cells.length; j++) {
                 var celda = fila.cells[j];
                 
-                // Habilitar / Deshabilitar contenteditable
                 if (celda.hasAttribute("contenteditable")) {
                     celda.contentEditable = esModoLectura ? "false" : "true";
                 }
 
-                // Habilitar / Deshabilitar inputs y selects
                 var elementosInput = celda.querySelectorAll("input, select");
                 elementosInput.forEach(function(el) {
                     el.disabled = esModoLectura;
@@ -868,7 +1067,6 @@
         }
     }
 
-    // ===== VALIDACIÓN PREVIA AL REORDENAMIENTO =====
     function validarYReordenar(input) {
         if (input.type === "date" && input.value) {
             var partes = input.value.split("-");
@@ -880,7 +1078,6 @@
         guardarTabla();
     }
 
-    // ===== FUNCIÓN PARA AUTO-ORDENAR AUTOMÁTICAMENTE POR FECHA Y HORA =====
     function reordenarPorFechaYHora() {
         var tbody = document.getElementById("cuerpoTabla");
         var filas = Array.from(tbody.rows);
@@ -892,7 +1089,6 @@
             if (fechaA < fechaB) return -1;
             if (fechaA > fechaB) return 1;
 
-            // Si las fechas son iguales, compara por la hora (Columna 6)
             var horaA = obtenerValorCelda(a.cells[6], 6) || "99:99";
             var horaB = obtenerValorCelda(b.cells[6], 6) || "99:99";
 
@@ -902,7 +1098,6 @@
             return 0;
         });
 
-        // Reorganizar visualmente las filas en el DOM
         filas.forEach(function(fila) { tbody.appendChild(fila); });
     }
 
@@ -1012,7 +1207,6 @@
                 }
             }
 
-            // Bloque dinámico para notas de equipo
             var htmlNotasEquipo = '';
             if (tipoDestinatario === "equipo") {
                 if (comCocina && comCocina.trim() !== "") {
@@ -1026,7 +1220,6 @@
                 }
             }
 
-            // Bloque dinámico exclusivo para comensal (solo si tiene anticipo registrado)
             var htmlComensalPin = '';
             if (tipoDestinatario === "comensal" && tieneAnticipo) {
                 htmlComensalPin = 
@@ -1282,7 +1475,12 @@
         if (valor === "Cancelado")  return { bg: "#FFC7CE", color: "#9C0006" };
         if (valor === "Terminado")  return { bg: "#FFFFFF", color: "#375623" };
         if (valor === "Pendiente")  return { bg: "#FFEB9C", color: "#9C6500" };
-        return { bg: "#FFFFFF", color: "#000000" };
+        
+        var esOscuro = document.body.classList.contains("dark-mode");
+        return { 
+            bg: esOscuro ? "#1e293b" : "#FFFFFF", 
+            color: esOscuro ? "#f8fafc" : "#000000" 
+        };
     }
 
     function obtenerValorCelda(celda, indice) {
