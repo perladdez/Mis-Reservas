@@ -3,13 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <title>Registro de Reservaciones</title>
-    <!-- Librería para convertir HTML a Imagen -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
-    <!-- SortableJS para Arrastrar y Reordenar Filas -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
-    <!-- Firebase SDK (Compatibilidad para scripts clásicos) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
@@ -576,7 +573,6 @@
 
     <h1>Registro de Reservaciones (<span id="nombreUsuarioTitulo">Cargando...</span>)</h1>
 
-    <!-- Control de Vistas y Modo Oscuro -->
     <div class="contenedor-vistas">
         <label for="selectorVista">Vista de tabla:</label>
         <select id="selectorVista" onchange="cambiarVista(this.value)">
@@ -586,7 +582,6 @@
             <option value="general">General</option>
         </select>
         
-        <!-- Botón para alternar modo oscuro -->
         <button id="btnModoOscuro" class="btn-toggle-dark" onclick="toggleModoOscuro()">🌙 Modo Oscuro</button>
     </div>
 
@@ -594,14 +589,12 @@
         <table id="tablaReservas">
             <thead>
                 <tr id="encabezadosTabla">
-                    <!-- Encabezados dinámicos -->
-                </tr>
+                    </tr>
             </thead>
             <tbody id="cuerpoTabla">
             </tbody>
         </table>
 
-        <!-- Menú Flotante Filtro Excel -->
         <div id="menuExcel" class="menu-excel">
             <div class="opcion-orden" onclick="ordenarColumna('ASC')">
                 <span>▲</span> Ordenar de menor a mayor
@@ -631,10 +624,8 @@
         <button type="button" class="btn-regresar" onclick="regresar()">Volver al menú</button>
     </div>
 
-    <!-- Oculto: Tarjeta previa para html2canvas -->
     <div id="tarjetaVistaPrevia"></div>
 
-    <!-- Ventana Modal de Selección -->
     <div id="modalDestinatario" class="modal-overlay">
         <div class="modal-box">
             <h3>¿Para quién es la imagen?</h3>
@@ -887,18 +878,6 @@
         return "$ " + numero.toLocaleString('es-MX');
     }
 
-    function manejarEnter(e, celda) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            this.blur();
-            var siguienteCelda = celda.nextElementSibling;
-            if (siguienteCelda) {
-                var elementoFoco = siguienteCelda.querySelector('input, select') || siguienteCelda;
-                if (elementoFoco) elementoFoco.focus();
-            }
-        }
-    }
-
     function generarPINUnico() {
         var tbody = document.getElementById("cuerpoTabla");
         var pinesExistentes = new Set();
@@ -1016,7 +995,6 @@
             } else if (i === 12) {
                 celda.contentEditable = "true";
                 celda.innerText = formatearDineroSinDecimales(valor);
-                celda.onkeydown = function(e) { manejarEnter(e, celda); };
                 celda.onblur = function() {
                     this.innerText = formatearDineroSinDecimales(this.innerText);
                     guardarTabla();
@@ -1061,7 +1039,6 @@
             } else {
                 celda.contentEditable = "true";
                 celda.innerText = valor || "";
-                celda.onkeydown = function(e) { manejarEnter(e, celda); };
                 celda.onblur = function() { guardarTabla(); };
             }
         }
@@ -1536,6 +1513,31 @@
         guardarTabla();
         window.location.href = "index.html";
     }
+
+    // ===== NAVEGACIÓN CON ENTER EN CAMPOS DE LA TABLA =====
+    document.addEventListener('DOMContentLoaded', () => {
+        document.body.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                // Filtra solo los elementos interactivos visibles dentro de la tabla
+                const inputs = Array.from(document.querySelectorAll('table input:not([type="checkbox"]):not([disabled]), table select:not([disabled]), table [contenteditable="true"]'))
+                    .filter(el => el.offsetWidth > 0 && el.offsetHeight > 0);
+
+                const currentIndex = inputs.indexOf(e.target);
+
+                if (currentIndex !== -1) {
+                    e.preventDefault();
+
+                    const nextInput = inputs[currentIndex + 1];
+                    if (nextInput) {
+                        nextInput.focus();
+                        if (typeof nextInput.select === 'function') {
+                            nextInput.select();
+                        }
+                    }
+                }
+            }
+        });
+    });
     </script>
 
 </body>
