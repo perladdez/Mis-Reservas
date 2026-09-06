@@ -6,6 +6,9 @@
     <!-- Librería para convertir HTML a Imagen -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
+    <!-- SortableJS para Arrastrar y Reordenar Filas -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
     <!-- Firebase SDK (Compatibilidad para scripts clásicos) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -67,7 +70,7 @@
             border-collapse: separate;
             border-spacing: 0;
             width: 100%;
-            min-width: 1650px;
+            min-width: 1700px;
             font-size: 14px;
         }
 
@@ -78,6 +81,29 @@
             text-align: left;
             vertical-align: top;
             background-color: #ffffff;
+        }
+
+        /* ===== ESTILO PARA EL DRAG HANDLE (::) ===== */
+        .drag-handle {
+            cursor: grab;
+            font-weight: bold;
+            font-size: 16px;
+            color: #888;
+            user-select: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+        }
+
+        .drag-handle:active {
+            cursor: grabbing;
+            color: #007bff;
+        }
+
+        .sortable-ghost {
+            opacity: 0.4;
+            background-color: #e2e8f0 !important;
         }
 
         /* ===== CONGELAR PRIMERA FILA ===== */
@@ -92,32 +118,39 @@
             border-top: 1px solid #dee2e6;
         }
 
-        /* ===== CONGELAR PRIMERAS 3 COLUMNAS ===== */
+        /* ===== CONGELAR PRIMERAS COLUMNAS (Mover, Checkbox, Nombre, Apellido) ===== */
         th:nth-child(1), td:nth-child(1) {
             position: sticky;
             left: 0;
-            width: 30px;
-            min-width: 30px;
+            width: 25px;
+            min-width: 25px;
         }
 
         th:nth-child(2), td:nth-child(2) {
             position: sticky;
-            left: 51px;
-            min-width: 120px;
+            left: 46px;
+            width: 30px;
+            min-width: 30px;
         }
 
         th:nth-child(3), td:nth-child(3) {
             position: sticky;
-            left: 192px;
+            left: 97px;
+            min-width: 120px;
+        }
+
+        th:nth-child(4), td:nth-child(4) {
+            position: sticky;
+            left: 238px;
             min-width: 120px;
             box-shadow: 2px 0 5px -1px rgba(0,0,0,0.15);
         }
 
-        tbody td:nth-child(1), tbody td:nth-child(2), tbody td:nth-child(3) {
+        tbody td:nth-child(1), tbody td:nth-child(2), tbody td:nth-child(3), tbody td:nth-child(4) {
             z-index: 5;
         }
 
-        thead th:nth-child(1), thead th:nth-child(2), thead th:nth-child(3) {
+        thead th:nth-child(1), thead th:nth-child(2), thead th:nth-child(3), thead th:nth-child(4) {
             z-index: 15;
             background-color: #d1d5db;
         }
@@ -374,13 +407,12 @@
 
     <h1>Registro de Reservaciones (<span id="nombreUsuarioTitulo">Cargando...</span>)</h1>
 
-
-   <!-- Control de Vistas -->
+    <!-- Control de Vistas -->
     <div class="contenedor-vistas">
         <label for="selectorVista">Vista de tabla:</label>
         <select id="selectorVista" onchange="cambiarVista(this.value)">
             <option value="nueva_reservacion" selected>Nueva reservación</option>
-            <option value="Equipo de trabajo">Equipo de trabajo</option>
+            <option value="meseros">Meseros</option>
             <option value="anticipos">Anticipos</option>
             <option value="general">General</option>
         </select>
@@ -460,7 +492,7 @@
     const db = firebase.database();
 
     var columnas = [
-        "", "Nombre", "Apellido", "Fecha", "Día", "Hora", 
+        "", "", "Nombre", "Apellido", "Fecha", "Día", "Hora", 
         "Menú", "#phone", "#p", "Área", "Status", 
         "Cantidad Anticipo", "Vía Anticipo", 
         "Comentarios para Cocina", "Comentarios para Meseros", "Comentarios para Barra",
@@ -469,6 +501,7 @@
 
     var columnaActual = null;
     var filtrosSeleccionados = {};
+    var sortableInstance = null;
 
     function obtenerUsuarioActual() {
         var urlParams = new URLSearchParams(window.location.search);
@@ -503,6 +536,20 @@
         return usuarioActivo ? "tablaReservasDatos_" + usuarioActivo : null;
     }
 
+    function inicializarDragAndDrop() {
+        var el = document.getElementById('cuerpoTabla');
+        if (!el) return;
+
+        sortableInstance = new Sortable(el, {
+            handle: '.drag-handle',
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            onEnd: function () {
+                guardarTabla();
+            }
+        });
+    }
+
     window.onload = function() {
         var usuarioActivo = obtenerUsuarioActual();
         if (!usuarioActivo) return;
@@ -512,6 +559,7 @@
         evaluarPermisosBotones();
 
         generarEncabezados();
+        inicializarDragAndDrop();
         
         var claveStorage = obtenerClaveUsuario();
         if (claveStorage) {
@@ -544,28 +592,28 @@
         var vistaActual = (document.getElementById("selectorVista") ? document.getElementById("selectorVista").value : "").toLowerCase();
         
         // 1. Eliminar filas
-        if (esUsuarioMesero() || vistaActual === "nueva_reservacion" || vistaActual === "anticipos" || vistaActual === "equipo_de_trabajo") {
+        if (esUsuarioMesero() || vistaActual === "nueva_reservacion" || vistaActual === "anticipos" || vistaActual === "meseros") {
             btnEliminar.style.display = "none";
         } else {
             btnEliminar.style.display = "inline-block";
         }
 
         // 2. Enviar por WhatsApp
-        if (esUsuarioMesero() || vistaActual === "nueva_reservacion" || vistaActual === "equipo_de_trabajo") {
+        if (esUsuarioMesero() || vistaActual === "nueva_reservacion" || vistaActual === "meseros") {
             btnWA.style.display = "none";
         } else {
             btnWA.style.display = "inline-block";
         }
 
         // 3. Agregar fila
-        if (vistaActual === "anticipos" || vistaActual === "equipo_de_trabajo") {
+        if (vistaActual === "anticipos" || vistaActual === "meseros") {
             btnAgregar.style.display = "none";
         } else {
             btnAgregar.style.display = "inline-block";
         }
 
         // 4. Guardar Cambios
-        if (vistaActual === "equipo_de_trabajo") {
+        if (vistaActual === "meseros") {
             btnGuardar.style.display = "none";
         } else {
             btnGuardar.style.display = "inline-block";
@@ -577,13 +625,12 @@
         var filas = tabla.rows;
 
         // Ocultar columnas según la vista
-        // Columna 7: #phone, Columna 18: Alta Traspasos, Columna 19: Retorno de anticipo
+        // Columna 8: #phone, Columna 19: Alta Traspasos, Columna 20: Retorno de anticipo
         var ocultarPorVista = {
-            
-            "nueva_reservacion": [18, 19],
-            "equipo_de_trabajo": [18, 19],
-            "anticipos": [6, 13, 14, 15],
-            "general": []
+            "general": [],
+            "nueva_reservacion": [19, 20],
+            "anticipos": [7, 14, 15, 16],
+            "meseros": [8, 20]
         };
 
         var columnasAOcultar = ocultarPorVista[vista] || [];
@@ -599,12 +646,17 @@
             }
         }
 
-        // Modo solo lectura para vista "equipo_de_trabajo"
-        var esModoLectura = (vista === "equipo_de_trabajo");
+        // Modo solo lectura para vista "meseros"
+        var esModoLectura = (vista === "meseros");
+
+        if (sortableInstance) {
+            sortableInstance.option("disabled", esModoLectura || esUsuarioMesero());
+        }
+
         var tbody = document.getElementById("cuerpoTabla");
         for (var i = 0; i < tbody.rows.length; i++) {
             var fila = tbody.rows[i];
-            for (var j = 1; j < fila.cells.length; j++) {
+            for (var j = 2; j < fila.cells.length; j++) {
                 var celda = fila.cells[j];
                 
                 // Habilitar / Deshabilitar contenteditable
@@ -655,7 +707,7 @@
 
         if (tbody) {
             for (var i = 0; i < tbody.rows.length; i++) {
-                var celdaPin = tbody.rows[i].cells[17];
+                var celdaPin = tbody.rows[i].cells[18];
                 if (celdaPin) {
                     var valPin = celdaPin.innerText.trim();
                     if (valPin) pinesExistentes.add(valPin);
@@ -678,6 +730,9 @@
             var th = document.createElement("th");
             
             if (idx === 0) {
+                th.innerText = "";
+                th.style.width = "25px";
+            } else if (idx === 1) {
                 th.innerHTML = '<input type="checkbox" onchange="marcarTodasLasFilas(this)">';
                 th.style.textAlign = "center";
             } else {
@@ -713,25 +768,31 @@
         var tbody = document.getElementById("cuerpoTabla");
         var nuevaFila = tbody.insertRow();
 
-        var celdaCheck = nuevaFila.insertCell(0);
+        // Celda 0: Drag Handle (::)
+        var celdaDrag = nuevaFila.insertCell(0);
+        celdaDrag.innerHTML = '<div class="drag-handle">::</div>';
+        celdaDrag.style.textAlign = "center";
+
+        // Celda 1: Checkbox
+        var celdaCheck = nuevaFila.insertCell(1);
         celdaCheck.innerHTML = '<input type="checkbox" class="chk-fila">';
         celdaCheck.style.textAlign = "center";
 
-        for (var i = 1; i < 20; i++) {
+        for (var i = 2; i < 21; i++) {
             var celda = nuevaFila.insertCell(i);
-            var valor = datos ? datos[i - 1] : "";
+            var valor = datos ? datos[i - 2] : "";
 
-            if (i === 3) {
+            if (i === 4) {
                 celda.innerHTML = '<input type="date" value="' + valor + '" onchange="actualizarDia(this); guardarTabla();">';
-            } else if (i === 4) {
+            } else if (i === 5) {
                 celda.innerText = capitalizarPrimerLetra(valor);
                 celda.style.backgroundColor = "#f0f0f0";
-            } else if (i === 5) {
-                celda.innerHTML = '<input type="time" value="' + valor + '" onchange="actualizarMenu(this); guardarTabla();">';
             } else if (i === 6) {
+                celda.innerHTML = '<input type="time" value="' + valor + '" onchange="actualizarMenu(this); guardarTabla();">';
+            } else if (i === 7) {
                 celda.innerText = valor;
                 celda.style.backgroundColor = "#f0f0f0";
-            } else if (i === 9) {
+            } else if (i === 10) {
                 var areaVal = valor || "";
                 celda.innerHTML = 
                     '<select class="celda-select" onchange="guardarTabla();">' +
@@ -742,7 +803,7 @@
                         '<option value="P. Chico 2"' + (areaVal === 'P. Chico 2' ? ' selected' : '') + '>P. Chico 2</option>' +
                         '<option value="Terraza"' + (areaVal === 'Terraza' ? ' selected' : '') + '>Terraza</option>' +
                     '</select>';
-            } else if (i === 10) {
+            } else if (i === 11) {
                 var statusVal = valor || "";
                 var estiloStatus = obtenerColorStatus(statusVal);
                 celda.style.backgroundColor = estiloStatus.bg;
@@ -754,7 +815,7 @@
                     '<option value="Cancelado"' + (statusVal === 'Cancelado' ? ' selected' : '') + '>Cancelado</option>' +
                     '<option value="Terminado"' + (statusVal === 'Terminado' ? ' selected' : '') + '>Terminado</option>' +
                 '</select>';
-            } else if (i === 11) {
+            } else if (i === 12) {
                 celda.contentEditable = "true";
                 celda.innerText = formatearDineroSinDecimales(valor);
                 celda.onkeydown = function(e) { manejarEnter(e, celda); };
@@ -762,7 +823,7 @@
                     this.innerText = formatearDineroSinDecimales(this.innerText);
                     guardarTabla();
                 };
-            } else if (i === 12) {
+            } else if (i === 13) {
                 var viaVal = valor || "";
                 celda.innerHTML = 
                     '<select class="celda-select" onchange="guardarTabla();">' +
@@ -773,11 +834,11 @@
                         '<option value="Otros"' + (viaVal === 'Otros' ? ' selected' : '') + '>Otros</option>' +
                         '<option value="No requerido"' + (viaVal === 'No requerido' ? ' selected' : '') + '>No requerido</option>' +
                     '</select>';
-            } else if (i === 17) {
+            } else if (i === 18) {
                 var pinVal = valor || generarPINUnico();
                 celda.innerText = pinVal;
                 celda.style.backgroundColor = "#f0f0f0";
-            } else if (i === 18) {
+            } else if (i === 19) {
                 var altaVal = valor || "";
                 celda.innerHTML = 
                     '<select class="celda-select" onchange="guardarTabla();">' +
@@ -786,7 +847,7 @@
                         '<option value="Realizado"' + (altaVal === 'Realizado' ? ' selected' : '') + '>Realizado</option>' +
                         '<option value="No requerido"' + (altaVal === 'No requerido' ? ' selected' : '') + '>No requerido</option>' +
                     '</select>';
-            } else if (i === 19) {
+            } else if (i === 20) {
                 var retornoVal = valor || "";
                 celda.innerHTML = 
                     '<select class="celda-select" onchange="guardarTabla();">' +
@@ -795,7 +856,7 @@
                         '<option value="Realizado"' + (retornoVal === 'Realizado' ? ' selected' : '') + '>Realizado</option>' +
                         '<option value="No requerido"' + (retornoVal === 'No requerido' ? ' selected' : '') + '>No requerido</option>' +
                     '</select>';
-            } else if (i === 13 || i === 14 || i === 15) {
+            } else if (i === 14 || i === 15 || i === 16) {
                 celda.contentEditable = "true";
                 celda.innerText = valor || "";
                 celda.onblur = function() { guardarTabla(); };
@@ -842,7 +903,7 @@
 
     function preguntarDestinatarioWA() {
         var vistaActual = (document.getElementById("selectorVista") ? document.getElementById("selectorVista").value : "").toLowerCase();
-        if (esUsuarioMesero() || vistaActual === "nueva_reservacion" || vistaActual === "equipo_de_trabajo") {
+        if (esUsuarioMesero() || vistaActual === "nueva_reservacion" || vistaActual === "meseros") {
             alert("No tienes permisos autorizados para enviar por WhatsApp.");
             return;
         }
@@ -876,23 +937,23 @@
         seleccionados.forEach(function(chk, index) {
             var fila = chk.parentElement.parentElement;
 
-            var nombre = obtenerValorCelda(fila.cells[1], 1);
-            var apellido = obtenerValorCelda(fila.cells[2], 2);
-            var fechaIso = obtenerValorCelda(fila.cells[3], 3);
+            var nombre = obtenerValorCelda(fila.cells[2], 2);
+            var apellido = obtenerValorCelda(fila.cells[3], 3);
+            var fechaIso = obtenerValorCelda(fila.cells[4], 4);
             var diaFormateado = obtenerFechaFormateada(fechaIso);
-            var horaBruta = obtenerValorCelda(fila.cells[5], 5);
+            var horaBruta = obtenerValorCelda(fila.cells[6], 6);
             var hora = formatearHora12h(horaBruta);
-            var menu = obtenerValorCelda(fila.cells[6], 6);
-            var phone = obtenerValorCelda(fila.cells[7], 7).replace(/\D/g, '');
-            var personas = obtenerValorCelda(fila.cells[8], 8);
-            var area = obtenerValorCelda(fila.cells[9], 9);
-            var status = obtenerValorCelda(fila.cells[10], 10);
-            var cantAnticipo = obtenerValorCelda(fila.cells[11], 11);
-            var viaAnticipo = obtenerValorCelda(fila.cells[12], 12);
-            var comCocina = obtenerValorCelda(fila.cells[13], 13);
-            var comMeseros = obtenerValorCelda(fila.cells[14], 14);
-            var comBarra = obtenerValorCelda(fila.cells[15], 15);
-            var pin = obtenerValorCelda(fila.cells[17], 17);
+            var menu = obtenerValorCelda(fila.cells[7], 7);
+            var phone = obtenerValorCelda(fila.cells[8], 8).replace(/\D/g, '');
+            var personas = obtenerValorCelda(fila.cells[9], 9);
+            var area = obtenerValorCelda(fila.cells[10], 10);
+            var status = obtenerValorCelda(fila.cells[11], 11);
+            var cantAnticipo = obtenerValorCelda(fila.cells[12], 12);
+            var viaAnticipo = obtenerValorCelda(fila.cells[13], 13);
+            var comCocina = obtenerValorCelda(fila.cells[14], 14);
+            var comMeseros = obtenerValorCelda(fila.cells[15], 15);
+            var comBarra = obtenerValorCelda(fila.cells[16], 16);
+            var pin = obtenerValorCelda(fila.cells[18], 18);
 
             if (index === 0 && phone) {
                 primerTelefono = phone;
@@ -987,7 +1048,7 @@
     function actualizarDia(inputFecha) {
         var fechaVal = inputFecha.value;
         var fila = inputFecha.parentElement.parentElement;
-        var celdaDia = fila.cells[4];
+        var celdaDia = fila.cells[5];
 
         if (!fechaVal) {
             celdaDia.innerText = "";
@@ -1003,7 +1064,7 @@
     function actualizarMenu(inputHora) {
         var horaVal = inputHora.value;
         var fila = inputHora.parentElement.parentElement;
-        var celdaMenu = fila.cells[6];
+        var celdaMenu = fila.cells[7];
 
         if (!horaVal) {
             celdaMenu.innerText = "";
@@ -1027,7 +1088,7 @@
     function eliminarFilasSeleccionadas() {
         var vistaActual = (document.getElementById("selectorVista") ? document.getElementById("selectorVista").value : "").toLowerCase();
         
-        if (esUsuarioMesero() || vistaActual === "nueva_reservacion" || vistaActual === "anticipos" || vistaActual === "equipo_de_trabajo") {
+        if (esUsuarioMesero() || vistaActual === "nueva_reservacion" || vistaActual === "anticipos" || vistaActual === "meseros") {
             alert("No tienes permisos autorizados para eliminar filas.");
             return;
         }
@@ -1118,7 +1179,7 @@
             var fila = tbody.rows[i];
             var mostrar = true;
 
-            for (var col = 1; col < 20; col++) {
+            for (var col = 2; col < 21; col++) {
                 if (filtrosSeleccionados[col]) {
                     var valCelda = obtenerValorCelda(fila.cells[col], col) || "(Vacías)";
                     if (!filtrosSeleccionados[col].includes(valCelda)) {
@@ -1161,7 +1222,7 @@
 
     function agregarFila() {
         var vistaActual = (document.getElementById("selectorVista") ? document.getElementById("selectorVista").value : "").toLowerCase();
-        if (vistaActual === "anticipos" || vistaActual === "equipo_de_trabajo") {
+        if (vistaActual === "anticipos" || vistaActual === "meseros") {
             alert("No se permite agregar filas desde esta vista.");
             return;
         }
@@ -1189,10 +1250,10 @@
 
     function obtenerValorCelda(celda, indice) {
         if (!celda) return "";
-        if (indice === 3 || indice === 5) {
+        if (indice === 4 || indice === 6) {
             var input = celda.querySelector("input");
             return input ? input.value : "";
-        } else if (indice === 9 || indice === 10 || indice === 12 || indice === 18 || indice === 19) {
+        } else if (indice === 10 || indice === 11 || indice === 13 || indice === 19 || indice === 20) {
             var select = celda.querySelector("select");
             return select ? select.value : "";
         } else {
@@ -1202,7 +1263,7 @@
 
     function guardarTabla(alerta) {
         var vistaActual = (document.getElementById("selectorVista") ? document.getElementById("selectorVista").value : "").toLowerCase();
-        if (vistaActual === "equipo_de_trabajo") return;
+        if (vistaActual === "meseros") return;
 
         var claveStorage = obtenerClaveUsuario();
         if (!claveStorage) return;
@@ -1214,7 +1275,7 @@
             var fila = tbody.rows[i];
             var filaData = [];
 
-            for (var j = 1; j < 20; j++) {
+            for (var j = 2; j < 21; j++) {
                 filaData.push(obtenerValorCelda(fila.cells[j], j));
             }
             datosGuardar.push(filaData);
