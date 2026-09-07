@@ -396,7 +396,7 @@
             background: white;
             padding: 24px;
             border-radius: 10px;
-            max-width: 380px;
+            max-width: 400px;
             width: 90%;
             text-align: center;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
@@ -412,13 +412,13 @@
         .modal-box p {
             color: #64748b;
             font-size: 14px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
         .modal-botones {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 10px;
             margin-bottom: 16px;
         }
 
@@ -440,12 +440,15 @@
         .btn-comensal:hover { background-color: #1fa855; }
 
         .btn-cancelar-modal {
-            background: transparent;
+            background: #dc3545;
             border: none;
-            color: #64748b;
-            font-size: 13px;
+            color: white;
+            font-size: 14px;
+            padding: 10px;
+            border-radius: 6px;
             cursor: pointer;
-            text-decoration: underline;
+            font-weight: bold;
+            margin-top: 5px;
         }
 
         /* ========================================================= */
@@ -519,7 +522,6 @@
             background-color: #334155 !important;
         }
 
-        /* Visibilidad de opciones desplegables */
         select option {
             background-color: #ffffff;
             color: #333333;
@@ -530,7 +532,6 @@
             color: #f8fafc !important;
         }
 
-        /* Adaptar selectores de fecha y hora al esquema oscuro nativo */
         body.dark-mode input[type="date"], 
         body.dark-mode input[type="time"], 
         body.dark-mode select.celda-select {
@@ -608,7 +609,7 @@
         <table id="tablaReservas">
             <thead>
                 <tr id="encabezadosTabla">
-                    </tr>
+                </tr>
             </thead>
             <tbody id="cuerpoTabla">
             </tbody>
@@ -648,12 +649,14 @@
     <div id="modalDestinatario" class="modal-overlay">
         <div class="modal-box">
             <h3>¿Para quién es la imagen?</h3>
-            <p>Selecciona una opción para generar el formato correspondiente:</p>
+
+            <hr style="margin: 15px 0;">
+
             <div class="modal-botones">
                 <button type="button" class="btn-opcion btn-equipo" onclick="seleccionarOpcionWA('equipo')">👥 Equipo de trabajo</button>
                 <button type="button" class="btn-opcion btn-comensal" onclick="seleccionarOpcionWA('comensal')">🍽️ Comensal</button>
+                <button type="button" class="btn-cancelar-modal" onclick="cerrarModalDestinatario()">Cancelar</button>
             </div>
-            <button type="button" class="btn-cancelar-modal" onclick="cerrarModalDestinatario()">Cancelar</button>
         </div>
     </div>
 
@@ -692,7 +695,6 @@
         localStorage.setItem("modoOscuro", esOscuro ? "activado" : "desactivado");
         actualizarTextoBotonTema(esOscuro);
 
-        // Re-pintar las celdas de status para adaptar las vacías al cambio de tema
         var selectsStatus = document.querySelectorAll("select.status-select");
         selectsStatus.forEach(function(select) {
             cambiarColor(select);
@@ -804,28 +806,24 @@
         var btnGuardar = document.getElementById("btnGuardarCambios");
         var vistaActual = (document.getElementById("selectorVista") ? document.getElementById("selectorVista").value : "").toLowerCase();
         
-        // 1. Eliminar filas
         if (esUsuarioMesero() || vistaActual === "nueva_reservacion" || vistaActual === "anticipos" || vistaActual === "meseros") {
             btnEliminar.style.display = "none";
         } else {
             btnEliminar.style.display = "inline-block";
         }
 
-        // 2. Enviar por WhatsApp
         if (esUsuarioMesero() || vistaActual === "nueva_reservacion" || vistaActual === "meseros") {
             btnWA.style.display = "none";
         } else {
             btnWA.style.display = "inline-block";
         }
 
-        // 3. Agregar fila
         if (vistaActual === "anticipos" || vistaActual === "meseros") {
             btnAgregar.style.display = "none";
         } else {
             btnAgregar.style.display = "inline-block";
         }
 
-        // 4. Guardar Cambios
         if (vistaActual === "meseros") {
             btnGuardar.style.display = "none";
         } else {
@@ -1183,6 +1181,7 @@
             var comBarra = obtenerValorCelda(fila.cells[16], 16);
             var pin = obtenerValorCelda(fila.cells[18], 18);
 
+            // Toma automáticamente el número telefónico de la columna #phone de la primera fila seleccionada
             if (index === 0 && phone) {
                 primerTelefono = phone;
             }
@@ -1242,33 +1241,51 @@
             contenedorTarjeta.appendChild(bloque);
         });
 
+        // Formatear código de país para México si tiene 10 dígitos
         if (primerTelefono.length === 10) {
             primerTelefono = "52" + primerTelefono;
         }
 
         const canvas = await html2canvas(contenedorTarjeta);
-        var enlace = document.createElement("a");
-        enlace.download = "Reservaciones_" + tipoDestinatario.toUpperCase() + ".png";
-        enlace.href = canvas.toDataURL("image/png");
-        enlace.click();
 
+        // 1. Detección de adjuntos seleccionados
+        var adjuntos = [];
+        var chkDesayuno = document.getElementById('chkDesayuno');
+        var chkComida = document.getElementById('chkComida');
+        var chkInbursa = document.getElementById('chkInbursa');
+
+        if (chkDesayuno && chkDesayuno.checked) {
+            adjuntos.push("📄 Menú Desayunos: " + chkDesayuno.value);
+        }
+        if (chkComida && chkComida.checked) {
+            adjuntos.push("📄 Menú Comida/Cena: " + chkComida.value);
+        }
+        if (chkInbursa && chkInbursa.checked) {
+            adjuntos.push("💳 Datos de Transferencia: " + chkInbursa.value);
+        }
+
+        // 2. Construcción del texto
+        var mensaje = "Buen día, adjunto información de su reservación.";
+        if (adjuntos.length > 0) {
+            mensaje += "\n\n*Documentos adjuntos:*\n" + adjuntos.join("\n");
+        }
+
+        // 3. Copiar la imagen directamente al portapapeles y abrir el chat específico
         canvas.toBlob(async function(blob) {
             try {
                 await navigator.clipboard.write([
                     new ClipboardItem({ [blob.type]: blob })
                 ]);
-                alert("¡Imagen lista (" + tipoDestinatario + ") y copiada al portapapeles!\nPresiona Ctrl + V en WhatsApp Web.");
             } catch (err) {
-                console.log("No se pudo copiar automáticamente al portapapeles.");
+                console.log("No se pudo copiar la imagen al portapapeles automáticamente.");
             }
-        });
 
-        var mensaje = "Buen día, adjunto comprobante con el resumen de su reservación.";
-        var urlWA = primerTelefono 
-            ? "https://web.whatsapp.com/send?phone=" + primerTelefono + "&text=" + encodeURIComponent(mensaje)
-            : "https://web.whatsapp.com/";
+            var urlWA = primerTelefono 
+                ? "https://api.whatsapp.com/send?phone=" + primerTelefono + "&text=" + encodeURIComponent(mensaje)
+                : "https://web.whatsapp.com/";
 
-        window.open(urlWA, "_blank");
+            window.open(urlWA, "_blank");
+        }, "image/png");
     }
 
     function actualizarDia(inputFecha) {
@@ -1536,7 +1553,6 @@
     document.addEventListener('DOMContentLoaded', () => {
         document.body.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
-                // Filtra solo los elementos interactivos visibles dentro de la tabla
                 const inputs = Array.from(document.querySelectorAll('table input:not([type="checkbox"]):not([disabled]), table select:not([disabled]), table [contenteditable="true"]'))
                     .filter(el => el.offsetWidth > 0 && el.offsetHeight > 0);
 
