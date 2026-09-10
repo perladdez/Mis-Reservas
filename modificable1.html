@@ -293,6 +293,13 @@
         .contenedor-diferido {
             display: flex;
             flex-direction: column;
+            gap: 6px;
+            width: 100%;
+        }
+
+        .fila-diferido {
+            display: flex;
+            align-items: center;
             gap: 4px;
             width: 100%;
         }
@@ -301,13 +308,25 @@
             border: 1px solid #cbd5e1 !important;
             border-radius: 3px;
             padding: 2px 4px;
-            font-size: 13px;
-            width: 90%;
+            font-size: 12px;
+            width: 55%;
             background: #ffffff;
             color: inherit;
         }
 
-        body.dark-mode .subinput-diferido {
+        .subselect-diferido {
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 3px;
+            padding: 2px 2px;
+            font-size: 11px;
+            width: 45%;
+            background: #ffffff;
+            color: inherit;
+            cursor: pointer;
+        }
+
+        body.dark-mode .subinput-diferido,
+        body.dark-mode .subselect-diferido {
             background: #0f172a;
             border-color: #475569 !important;
             color: #f8fafc;
@@ -1021,6 +1040,16 @@
         });
     }
 
+    function construirSelectMetodoPagoDiferido(metodoSeleccionado) {
+        var m = metodoSeleccionado || "";
+        return '<select class="subselect-diferido" onchange="guardarTabla();">' +
+            '<option value=""' + (m === '' ? ' selected' : '') + '>Vía...</option>' +
+            '<option value="Efectivo"' + (m === 'Efectivo' ? ' selected' : '') + '>Efectivo</option>' +
+            '<option value="Tarjeta"' + (m === 'Tarjeta' ? ' selected' : '') + '>Tarjeta</option>' +
+            '<option value="Transferencia"' + (m === 'Transferencia' ? ' selected' : '') + '>Transferencia</option>' +
+        '</select>';
+    }
+
     function cambiarViaAnticipo(select) {
         var fila = select.parentElement.parentElement;
         var celdaCantidad = fila.cells[12];
@@ -1030,11 +1059,29 @@
             var valorActual = obtenerValorCelda(celdaCantidad, 12);
             var parte1 = "";
             var parte2 = "";
+            var met1 = "";
+            var met2 = "";
 
             if (valorActual.includes(" / ")) {
-                var partes = valorActual.split(" / ");
-                parte1 = partes[0] || "";
-                parte2 = partes[1] || "";
+                var bloques = valorActual.split(" / ");
+                var b1 = bloques[0] || "";
+                var b2 = bloques[1] || "";
+
+                if (b1.includes("(")) {
+                    var p1 = b1.split("(");
+                    parte1 = p1[0].trim();
+                    met1 = p1[1].replace(")", "").trim();
+                } else {
+                    parte1 = b1;
+                }
+
+                if (b2.includes("(")) {
+                    var p2 = b2.split("(");
+                    parte2 = p2[0].trim();
+                    met2 = p2[1].replace(")", "").trim();
+                } else {
+                    parte2 = b2;
+                }
             } else {
                 parte1 = valorActual;
             }
@@ -1042,14 +1089,25 @@
             celdaCantidad.removeAttribute("contenteditable");
             celdaCantidad.innerHTML = 
                 '<div class="contenedor-diferido">' +
-                    '<input type="text" class="subinput-diferido" placeholder="Anticipo 1" value="' + parte1 + '" onblur="formatearSubinputDiferido(this); guardarTabla();">' +
-                    '<input type="text" class="subinput-diferido" placeholder="Anticipo 2" value="' + parte2 + '" onblur="formatearSubinputDiferido(this); guardarTabla();">' +
+                    '<div class="fila-diferido">' +
+                        '<input type="text" class="subinput-diferido" placeholder="Pago 1" value="' + parte1 + '" onblur="formatearSubinputDiferido(this); guardarTabla();">' +
+                        construirSelectMetodoPagoDiferido(met1) +
+                    '</div>' +
+                    '<div class="fila-diferido">' +
+                        '<input type="text" class="subinput-diferido" placeholder="Pago 2" value="' + parte2 + '" onblur="formatearSubinputDiferido(this); guardarTabla();">' +
+                        construirSelectMetodoPagoDiferido(met2) +
+                    '</div>' +
                 '</div>';
         } else {
             var valorConcatenado = obtenerValorCelda(celdaCantidad, 12);
             var valorFinal = valorConcatenado;
             if (valorConcatenado.includes(" / ")) {
-                valorFinal = valorConcatenado.split(" / ")[0];
+                var primerBloque = valorConcatenado.split(" / ")[0];
+                if (primerBloque.includes("(")) {
+                    valorFinal = primerBloque.split("(")[0].trim();
+                } else {
+                    valorFinal = primerBloque;
+                }
             }
 
             celdaCantidad.contentEditable = "true";
@@ -1123,18 +1181,43 @@
                 if (viaAnticipoInicial === "Diferido") {
                     var parte1 = "";
                     var parte2 = "";
+                    var met1 = "";
+                    var met2 = "";
+
                     if (valor.includes(" / ")) {
-                        var partes = valor.split(" / ");
-                        parte1 = partes[0] || "";
-                        parte2 = partes[1] || "";
+                        var bloques = valor.split(" / ");
+                        var b1 = bloques[0] || "";
+                        var b2 = bloques[1] || "";
+
+                        if (b1.includes("(")) {
+                            var p1 = b1.split("(");
+                            parte1 = p1[0].trim();
+                            met1 = p1[1].replace(")", "").trim();
+                        } else {
+                            parte1 = b1;
+                        }
+
+                        if (b2.includes("(")) {
+                            var p2 = b2.split("(");
+                            parte2 = p2[0].trim();
+                            met2 = p2[1].replace(")", "").trim();
+                        } else {
+                            parte2 = b2;
+                        }
                     } else {
                         parte1 = valor;
                     }
 
                     celda.innerHTML = 
                         '<div class="contenedor-diferido">' +
-                            '<input type="text" class="subinput-diferido" placeholder="Anticipo 1" value="' + parte1 + '" onblur="formatearSubinputDiferido(this); guardarTabla();">' +
-                            '<input type="text" class="subinput-diferido" placeholder="Anticipo 2" value="' + parte2 + '" onblur="formatearSubinputDiferido(this); guardarTabla();">' +
+                            '<div class="fila-diferido">' +
+                                '<input type="text" class="subinput-diferido" placeholder="Pago 1" value="' + parte1 + '" onblur="formatearSubinputDiferido(this); guardarTabla();">' +
+                                construirSelectMetodoPagoDiferido(met1) +
+                            '</div>' +
+                            '<div class="fila-diferido">' +
+                                '<input type="text" class="subinput-diferido" placeholder="Pago 2" value="' + parte2 + '" onblur="formatearSubinputDiferido(this); guardarTabla();">' +
+                                construirSelectMetodoPagoDiferido(met2) +
+                            '</div>' +
                         '</div>';
                 } else {
                     celda.contentEditable = "true";
@@ -1780,11 +1863,18 @@
             return select ? select.value : "";
         } else if (indice === 12) {
             var subinputs = celda.querySelectorAll(".subinput-diferido");
+            var subselects = celda.querySelectorAll(".subselect-diferido");
             if (subinputs.length > 0) {
                 var v1 = subinputs[0].value.trim();
+                var m1 = subselects[0] ? subselects[0].value : "";
+                var txt1 = v1 ? (m1 ? v1 + " (" + m1 + ")" : v1) : "";
+
                 var v2 = subinputs[1].value.trim();
-                if (v1 && v2) return v1 + " / " + v2;
-                return v1 || v2 || "";
+                var m2 = subselects[1] ? subselects[1].value : "";
+                var txt2 = v2 ? (m2 ? v2 + " (" + m2 + ")" : v2) : "";
+
+                if (txt1 && txt2) return txt1 + " / " + txt2;
+                return txt1 || txt2 || "";
             }
             return celda.innerText.trim();
         } else {
