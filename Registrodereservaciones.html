@@ -1258,7 +1258,7 @@
             mensaje += "\n\n*Documentos adjuntos:*\n" + adjuntos.join("\n");
         }
 
-        // 3. Copiar la imagen directamente al portapapeles y abrir el chat específico
+        // 3. Copiar la imagen al portapapeles y abrir el destino correspondiente
         canvas.toBlob(async function(blob) {
             try {
                 await navigator.clipboard.write([
@@ -1268,9 +1268,21 @@
                 console.log("No se pudo copiar la imagen al portapapeles automáticamente.");
             }
 
-            var urlWA = primerTelefono 
-                ? "https://api.whatsapp.com/send?phone=" + primerTelefono + "&text=" + encodeURIComponent(mensaje)
-                : "https://web.whatsapp.com/";
+            // Detección de dispositivo móvil
+            var esMovil = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            var urlWA = "";
+
+            if (esMovil) {
+                // Abre directamente la app de WhatsApp en celulares
+                urlWA = primerTelefono 
+                    ? "whatsapp://send?phone=" + primerTelefono + "&text=" + encodeURIComponent(mensaje)
+                    : "whatsapp://send?text=" + encodeURIComponent(mensaje);
+            } else {
+                // Abre WhatsApp Web en computadoras
+                urlWA = primerTelefono 
+                    ? "https://api.whatsapp.com/send?phone=" + primerTelefono + "&text=" + encodeURIComponent(mensaje)
+                    : "https://web.whatsapp.com/";
+            }
 
             window.open(urlWA, "_blank");
         }, "image/png");
