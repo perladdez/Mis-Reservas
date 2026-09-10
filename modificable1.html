@@ -203,18 +203,17 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.25);
             padding: 12px;
             z-index: 9999;
-            width: 260px;
+            width: 280px;
             font-size: 13px;
             border-radius: 6px;
         }
 
-        .menu-excel input[type="text"],
-        .menu-excel input[type="search"] {
+        .input-buscar-filtro {
             width: 100%;
             box-sizing: border-box;
             padding: 6px 8px;
-            margin-top: 6px;
-            margin-bottom: 6px;
+            margin-top: 8px;
+            margin-bottom: 8px;
             border: 1px solid #ccc;
             border-radius: 4px;
             font-size: 13px;
@@ -234,10 +233,10 @@
         }
 
         .lista-checkboxes {
-            max-height: 200px;
+            max-height: 220px;
             overflow-y: auto;
             border: 1px solid #ddd;
-            margin-top: 8px;
+            margin-top: 4px;
             margin-bottom: 12px;
             padding: 8px;
             background: #fafafa;
@@ -246,9 +245,22 @@
 
         .lista-checkboxes label {
             display: block;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
             cursor: pointer;
             font-size: 13px;
+        }
+
+        .grupo-arbol {
+            margin-left: 12px;
+        }
+
+        .toggle-arbol {
+            cursor: pointer;
+            font-weight: bold;
+            font-family: monospace;
+            display: inline-block;
+            width: 14px;
+            user-select: none;
         }
 
         .acciones-menu {
@@ -358,7 +370,6 @@
         .btn-agregar { background-color: #28a745; }
         .btn-eliminar { background-color: #dc3545; }
         
-        /* Botón WhatsApp con icono SVG y texto en un solo nivel */
         .btn-wa { 
             background-color: #25d366; 
             color: white; 
@@ -603,15 +614,13 @@
             color: #f8fafc;
         }
 
-        body.dark-mode .menu-excel input[type="text"],
-        body.dark-mode .menu-excel input[type="search"] {
+        body.dark-mode .input-buscar-filtro {
             background-color: #0f172a;
             color: #f8fafc;
             border: 1px solid #475569;
         }
 
-        body.dark-mode .menu-excel input[type="text"]::placeholder,
-        body.dark-mode .menu-excel input[type="search"]::placeholder {
+        body.dark-mode .input-buscar-filtro::placeholder {
             color: #94a3b8;
         }
 
@@ -670,12 +679,13 @@
                 <span>▼</span> Ordenar de mayor a menor
             </div>
             <hr style="margin: 8px 0; border: 0; border-top: 1px solid #eee;">
-            <div style="font-weight: bold; font-size: 11px; color: #888; margin-top: 4px;">SELECCIONAR VALORES:</div>
             
+            <input type="text" id="inputBuscarFiltro" class="input-buscar-filtro" placeholder="Buscar (Todos)" oninput="filtrarOpcionesMenu(this.value)">
+
             <div class="lista-checkboxes" id="contenedorCheckboxes"></div>
 
             <div class="acciones-menu">
-                <button type="button" class="btn-guardar" onclick="aplicarFiltrosExcel()">Aplicar</button>
+                <button type="button" class="btn-guardar" onclick="aplicarFiltrosExcel()">Aceptar</button>
                 <button type="button" class="btn-regresar" onclick="cerrarMenu()">Cancelar</button>
             </div>
         </div>
@@ -728,12 +738,10 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // Contraseñas configurables para las vistas protegidas
     var contrasenaGeneral = "Quijote2026*";
     var contrasenaBackup = "Backup2026*";
     var vistaAnterior = "nueva_reservacion";
 
-    // Variables globales para recordar la autenticación en la sesión actual
     window.sesionGeneralAutenticada = false;
     window.sesionBackupAutenticada = false;
 
@@ -931,7 +939,6 @@
     function cambiarVista(vista) {
         var selector = document.getElementById("selectorVista");
 
-        // Validación de contraseña solo si la sesión no ha sido autenticada previamente
         if (vista === "general") {
             if (!window.sesionGeneralAutenticada) {
                 var pass = prompt("Por favor, introduce la contraseña para acceder a la vista General:");
@@ -1768,6 +1775,9 @@
         if (leftPos < 10) leftPos = 10;
         menu.style.left = leftPos + "px";
 
+        var inputBuscar = document.getElementById("inputBuscarFiltro");
+        if (inputBuscar) inputBuscar.value = "";
+
         poblarCheckboxes(colIndex);
     }
 
@@ -1775,15 +1785,26 @@
         document.getElementById("menuExcel").style.display = "none";
     }
 
+    function toggleRamaArbol(span, idGrupo) {
+        var grupo = document.getElementById(idGrupo);
+        if (grupo) {
+            var esVisible = grupo.style.display !== "none";
+            grupo.style.display = esVisible ? "none" : "block";
+            span.innerText = esVisible ? "⊞" : "⊟";
+        }
+    }
+
+    function sincronizarHijosArbol(parentCheckbox) {
+        var contenedorPadre = parentCheckbox.closest('.nodo-arbol');
+        if (!contenedorPadre) return;
+        var checkboxesHijos = contenedorPadre.querySelectorAll('.chk-item');
+        checkboxesHijos.forEach(function(chk) {
+            chk.checked = parentCheckbox.checked;
+        });
+    }
+
     function poblarCheckboxes(colIndex) {
         var tbody = document.getElementById("cuerpoTabla");
-        var valores = new Set();
-
-        for (var i = 0; i < tbody.rows.length; i++) {
-            var val = obtenerValorCelda(tbody.rows[i].cells[colIndex], colIndex);
-            valores.add(val || "(Vacías)");
-        }
-
         var contenedor = document.getElementById("contenedorCheckboxes");
         contenedor.innerHTML = "";
 
@@ -1793,16 +1814,112 @@
 
         var seleccionadosPreviamente = filtrosSeleccionados[colIndex];
 
-        valores.forEach(function(val) {
-            var isChecked = !seleccionadosPreviamente || seleccionadosPreviamente.includes(val);
-            var label = document.createElement("label");
-            label.innerHTML = '<input type="checkbox" class="chk-item" value="' + val + '" ' + (isChecked ? 'checked' : '') + '> ' + val;
-            contenedor.appendChild(label);
+        if (colIndex === 4) { // Columna de Fecha: Estructura de árbol tipo Excel
+            var arbolFechas = {};
+            var vaciasExiste = false;
+            var mesesNombres = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+
+            for (var i = 0; i < tbody.rows.length; i++) {
+                var val = obtenerValorCelda(tbody.rows[i].cells[colIndex], colIndex);
+                if (val) {
+                    var partes = val.split("-");
+                    if (partes.length === 3) {
+                        var anio = partes[0];
+                        var mesIdx = parseInt(partes[1], 10) - 1;
+                        var mesNombre = mesesNombres[mesIdx];
+                        var dia = parseInt(partes[2], 10).toString();
+
+                        if (!arbolFechas[anio]) arbolFechas[anio] = {};
+                        if (!arbolFechas[anio][mesNombre]) arbolFechas[anio][mesNombre] = new Set();
+                        arbolFechas[anio][mesNombre].add(dia);
+                    }
+                } else {
+                    vaciasExiste = true;
+                }
+            }
+
+            Object.keys(arbolFechas).sort().reverse().forEach(function(anio) {
+                var nodoAnio = document.createElement("div");
+                nodoAnio.className = "nodo-arbol";
+
+                var idGrupoAnio = "grupo_" + anio;
+                var htmlAnio = 
+                    '<div>' +
+                        '<span class="toggle-arbol" onclick="toggleRamaArbol(this, \'' + idGrupoAnio + '\')">⊟</span> ' +
+                        '<label style="display:inline;"><input type="checkbox" class="chk-grupo" checked onchange="sincronizarHijosArbol(this)"> <b>' + anio + '</b></label>' +
+                    '</div>' +
+                    '<div class="grupo-arbol" id="' + idGrupoAnio + '">';
+
+                Object.keys(arbolFechas[anio]).forEach(function(mes) {
+                    var idGrupoMes = "grupo_" + anio + "_" + mes;
+                    htmlAnio += 
+                        '<div class="nodo-arbol" style="margin-left: 12px;">' +
+                            '<div>' +
+                                '<span class="toggle-arbol" onclick="toggleRamaArbol(this, \'' + idGrupoMes + '\')">⊟</span> ' +
+                                '<label style="display:inline;"><input type="checkbox" class="chk-grupo" checked onchange="sincronizarHijosArbol(this)"> <b>' + mes + '</b></label>' +
+                            '</div>' +
+                            '<div class="grupo-arbol" id="' + idGrupoMes + '" style="margin-left: 16px;">';
+
+                    Array.from(arbolFechas[anio][mes]).sort(function(a,b){ return a-b; }).forEach(function(dia) {
+                        var diaPad = dia.padStart(2, '0');
+                        var mesNum = (mesesNombres.indexOf(mes) + 1).toString().padStart(2, '0');
+                        var valorIso = anio + "-" + mesNum + "-" + diaPad;
+
+                        var isChecked = !seleccionadosPreviamente || seleccionadosPreviamente.includes(valorIso);
+                        htmlAnio += '<label><input type="checkbox" class="chk-item" value="' + valorIso + '" ' + (isChecked ? 'checked' : '') + '> ' + dia + '</label>';
+                    });
+
+                    htmlAnio += '</div></div>';
+                });
+
+                htmlAnio += '</div>';
+                nodoAnio.innerHTML = htmlAnio;
+                contenedor.appendChild(nodoAnio);
+            });
+
+            if (vaciasExiste) {
+                var isCheckedVac = !seleccionadosPreviamente || seleccionadosPreviamente.includes("(Vacías)");
+                var labelVac = document.createElement("label");
+                labelVac.innerHTML = '<input type="checkbox" class="chk-item" value="(Vacías)" ' + (isCheckedVac ? 'checked' : '') + '> (Vacías)';
+                contenedor.appendChild(labelVac);
+            }
+
+        } else { // Columnas estándar de texto/opción
+            var valores = new Set();
+            for (var i = 0; i < tbody.rows.length; i++) {
+                var val = obtenerValorCelda(tbody.rows[i].cells[colIndex], colIndex);
+                valores.add(val || "(Vacías)");
+            }
+
+            valores.forEach(function(val) {
+                var isChecked = !seleccionadosPreviamente || seleccionadosPreviamente.includes(val);
+                var label = document.createElement("label");
+                label.className = "opcion-label";
+                label.innerHTML = '<input type="checkbox" class="chk-item" value="' + val + '" ' + (isChecked ? 'checked' : '') + '> ' + val;
+                contenedor.appendChild(label);
+            });
+        }
+    }
+
+    function filtrarOpcionesMenu(texto) {
+        var filtro = texto.toLowerCase().trim();
+        var contenedor = document.getElementById("contenedorCheckboxes");
+        var elementosLabel = contenedor.querySelectorAll("label");
+
+        elementosLabel.forEach(function(label) {
+            var txtLabel = label.innerText.toLowerCase();
+            if (label.querySelector("#chkTodos")) return;
+
+            if (txtLabel.includes(filtro)) {
+                label.style.display = "";
+            } else {
+                label.style.display = "none";
+            }
         });
     }
 
     function marcarTodos(source) {
-        var checkboxes = document.querySelectorAll(".chk-item");
+        var checkboxes = document.querySelectorAll("#contenedorCheckboxes input[type='checkbox']");
         checkboxes.forEach(function(chk) { chk.checked = source.checked; });
     }
 
