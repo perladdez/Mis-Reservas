@@ -1332,12 +1332,18 @@
     // ===== FUNCIONES DE EXPORTACIÓN Y RESPALDO =====
 
     function obtenerMatrizDatosExportar() {
-        var tbody = document.getElementById("cuerpoTabla");
+        var seleccionados = document.querySelectorAll(".chk-fila:checked");
+        
+        if (seleccionados.length === 0) {
+            alert("Por favor, selecciona al menos una reservación usando la casilla (checkbox) para exportar.");
+            return null;
+        }
+
         var encabezados = columnas.slice(2);
         var matriz = [encabezados];
 
-        for (var i = 0; i < tbody.rows.length; i++) {
-            var fila = tbody.rows[i];
+        seleccionados.forEach(function(chk) {
+            var fila = chk.parentElement.parentElement;
             if (fila.style.display !== "none") {
                 var filaData = [];
                 for (var j = 2; j < 21; j++) {
@@ -1345,14 +1351,14 @@
                 }
                 matriz.push(filaData);
             }
-        }
+        });
+
         return matriz;
     }
 
     function exportarExcel() {
         var datos = obtenerMatrizDatosExportar();
-        if (datos.length <= 1) {
-            alert("No hay datos para exportar.");
+        if (!datos || datos.length <= 1) {
             return;
         }
 
@@ -1367,8 +1373,7 @@
 
     function exportarPDF() {
         var datos = obtenerMatrizDatosExportar();
-        if (datos.length <= 1) {
-            alert("No hay datos para exportar.");
+        if (!datos || datos.length <= 1) {
             return;
         }
 
@@ -1766,11 +1771,11 @@
                 if (currentIndex !== -1) {
                     e.preventDefault();
 
-                    // Si se presiona Enter en el último campo visible de la tabla
+// Si se presiona Enter en el último campo visible de la tabla
                     if (currentIndex === inputs.length - 1) {
                         const vistaActual = (document.getElementById("selectorVista") ? document.getElementById("selectorVista").value : "").toLowerCase();
                         
-                        if (vistaActual !== "anticipos" && vistaActual !== "copia_seguridad") {
+                        if (vistaActual !== "anticipos" && vistaActual !== "meseros" && vistaActual !== "copia_seguridad") {
                             agregarFila();
                             ejecutarGuardadoAuto();
 
