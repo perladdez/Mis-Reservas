@@ -356,7 +356,23 @@
 
         .btn-agregar { background-color: #28a745; }
         .btn-eliminar { background-color: #dc3545; }
-        .btn-wa { background-color: #25d366; color: white; font-size: 16px; padding: 8px 14px; }
+        
+        /* Estilos del botón WhatsApp con el logo oficial SVG */
+        .btn-wa { 
+            background-color: #25d366; 
+            color: white; 
+            padding: 6px 12px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-wa img {
+            width: 20px;
+            height: 20px;
+            display: block;
+        }
+
         .btn-guardar { background-color: #007bff; }
         .btn-limpiar { background-color: #ffc107; color: #333; }
         .btn-export-excel { background-color: #107c41; }
@@ -666,7 +682,9 @@
     <div class="acciones">
         <button type="button" class="btn-agregar" id="btnAgregarFila" onclick="agregarFila()">+ Agregar</button>
         <button type="button" class="btn-eliminar" id="btnEliminarFilas" onclick="eliminarFilasSeleccionadas()">Eliminar</button>
-        <button type="button" class="btn-wa" id="btnEnviarWA" onclick="preguntarDestinatarioWA()" title="Enviar por WhatsApp">📲</button>
+        <button type="button" class="btn-wa" id="btnEnviarWA" onclick="preguntarDestinatarioWA()" title="Enviar por WhatsApp">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp">
+        </button>
         <button type="button" class="btn-export-excel" id="btnExportExcel" onclick="exportarExcel()">Exportar a Excel</button>
         <button type="button" class="btn-export-pdf" id="btnExportPDF" onclick="exportarPDF()">Exportar a PDF</button>
         <button type="button" class="btn-backup" id="btnBackup" onclick="descargarRespaldoJSON()">📥 Respaldar (JSON)</button>
