@@ -1837,8 +1837,31 @@
         }
 
         crearFilaHTML(["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""]);
+        
+        // Aplicar la ocultación de columnas directamente sin llamar a cambiarVista()
+        var tabla = document.getElementById("tablaReservas");
+        var filas = tabla.rows;
+        var ocultarPorVista = {
+            "general": [],
+            "copia_seguridad": [],
+            "nueva_reservacion": [19, 20],
+            "anticipos": [7, 14, 15, 16],
+            "meseros": [8, 20]
+        };
+        var columnasAOcultar = ocultarPorVista[vistaActual] || [];
+
+        for (var i = 0; i < filas.length; i++) {
+            var celdas = filas[i].children;
+            for (var j = 0; j < celdas.length; j++) {
+                if (columnasAOcultar.includes(j)) {
+                    celdas[j].classList.add("columna-oculta");
+                } else {
+                    celdas[j].classList.remove("columna-oculta");
+                }
+            }
+        }
+
         guardarTabla();
-        cambiarVista(vistaActual);
     }
 
     function cambiarColor(select) {
