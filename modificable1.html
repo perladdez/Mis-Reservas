@@ -1161,12 +1161,10 @@
                 celda.innerHTML = '<input type="date" value="' + valor + '" oninput="actualizarDia(this);" onblur="validarYReordenar(this);">';
             } else if (i === 5) {
                 celda.innerText = capitalizarPrimerLetra(valor);
-                celda.style.backgroundColor = "#f0f0f0";
             } else if (i === 6) {
                 celda.innerHTML = '<input type="time" value="' + valor + '" oninput="actualizarMenu(this);" onblur="validarYReordenar(this);">';
             } else if (i === 7) {
                 celda.innerText = valor;
-                celda.style.backgroundColor = "#f0f0f0";
             } else if (i === 10) {
                 var areaVal = valor || "";
                 celda.innerHTML = 
@@ -1254,7 +1252,6 @@
             } else if (i === 18) {
                 var pinVal = valor || generarPINUnico();
                 celda.innerText = pinVal;
-                celda.style.backgroundColor = "#f0f0f0";
             } else if (i === 19) {
                 var altaVal = valor || "";
                 celda.innerHTML = 
