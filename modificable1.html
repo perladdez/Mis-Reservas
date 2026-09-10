@@ -289,22 +289,22 @@
             font-weight: bold;
         }
 
-        /* Contenedor para dividir la celda de Cantidad Anticipo cuando es Diferido */
-        .contenedor-diferido {
+        /* Contenedor para dividir la celda de Cantidad Anticipo cuando es Dividido */
+        .contenedor-Dividido {
             display: flex;
             flex-direction: column;
             gap: 6px;
             width: 100%;
         }
 
-        .fila-diferido {
+        .fila-Dividido {
             display: flex;
             align-items: center;
             gap: 4px;
             width: 100%;
         }
 
-        .subinput-diferido {
+        .subinput-Dividido {
             border: 1px solid #cbd5e1 !important;
             border-radius: 3px;
             padding: 2px 4px;
@@ -314,7 +314,7 @@
             color: inherit;
         }
 
-        .subselect-diferido {
+        .subselect-Dividido {
             border: 1px solid #cbd5e1 !important;
             border-radius: 3px;
             padding: 2px 2px;
@@ -325,8 +325,8 @@
             cursor: pointer;
         }
 
-        body.dark-mode .subinput-diferido,
-        body.dark-mode .subselect-diferido {
+        body.dark-mode .subinput-Dividido,
+        body.dark-mode .subselect-Dividido {
             background: #0f172a;
             border-color: #475569 !important;
             color: #f8fafc;
@@ -1040,9 +1040,9 @@
         });
     }
 
-    function construirSelectMetodoPagoDiferido(metodoSeleccionado) {
+    function construirSelectMetodoPagoDividido(metodoSeleccionado) {
         var m = metodoSeleccionado || "";
-        return '<select class="subselect-diferido" onchange="guardarTabla();">' +
+        return '<select class="subselect-Dividido" onchange="guardarTabla();">' +
             '<option value=""' + (m === '' ? ' selected' : '') + '>Vía...</option>' +
             '<option value="Efectivo"' + (m === 'Efectivo' ? ' selected' : '') + '>Efectivo</option>' +
             '<option value="Tarjeta"' + (m === 'Tarjeta' ? ' selected' : '') + '>Tarjeta</option>' +
@@ -1055,7 +1055,7 @@
         var celdaCantidad = fila.cells[12];
         var viaVal = select.value;
 
-        if (viaVal === "Diferido") {
+        if (viaVal === "Dividido") {
             var valorActual = obtenerValorCelda(celdaCantidad, 12);
             var parte1 = "";
             var parte2 = "";
@@ -1088,14 +1088,14 @@
 
             celdaCantidad.removeAttribute("contenteditable");
             celdaCantidad.innerHTML = 
-                '<div class="contenedor-diferido">' +
-                    '<div class="fila-diferido">' +
-                        '<input type="text" class="subinput-diferido" placeholder="Pago 1" value="' + parte1 + '" onblur="formatearSubinputDiferido(this); guardarTabla();">' +
-                        construirSelectMetodoPagoDiferido(met1) +
+                '<div class="contenedor-Dividido">' +
+                    '<div class="fila-Dividido">' +
+                        '<input type="text" class="subinput-Dividido" placeholder="Pago 1" value="' + parte1 + '" onblur="formatearSubinputDividido(this); guardarTabla();">' +
+                        construirSelectMetodoPagoDividido(met1) +
                     '</div>' +
-                    '<div class="fila-diferido">' +
-                        '<input type="text" class="subinput-diferido" placeholder="Pago 2" value="' + parte2 + '" onblur="formatearSubinputDiferido(this); guardarTabla();">' +
-                        construirSelectMetodoPagoDiferido(met2) +
+                    '<div class="fila-Dividido">' +
+                        '<input type="text" class="subinput-Dividido" placeholder="Pago 2" value="' + parte2 + '" onblur="formatearSubinputDividido(this); guardarTabla();">' +
+                        construirSelectMetodoPagoDividido(met2) +
                     '</div>' +
                 '</div>';
         } else {
@@ -1120,7 +1120,7 @@
         guardarTabla();
     }
 
-    function formatearSubinputDiferido(input) {
+    function formatearSubinputDividido(input) {
         if (input.value) {
             input.value = formatearDineroSinDecimales(input.value);
         }
@@ -1178,7 +1178,7 @@
                     '<option value="Terminado"' + (statusVal === 'Terminado' ? ' selected' : '') + '>Terminado</option>' +
                 '</select>';
             } else if (i === 12) {
-                if (viaAnticipoInicial === "Diferido") {
+                if (viaAnticipoInicial === "Dividido") {
                     var parte1 = "";
                     var parte2 = "";
                     var met1 = "";
@@ -1209,14 +1209,14 @@
                     }
 
                     celda.innerHTML = 
-                        '<div class="contenedor-diferido">' +
-                            '<div class="fila-diferido">' +
-                                '<input type="text" class="subinput-diferido" placeholder="Pago 1" value="' + parte1 + '" onblur="formatearSubinputDiferido(this); guardarTabla();">' +
-                                construirSelectMetodoPagoDiferido(met1) +
+                        '<div class="contenedor-Dividido">' +
+                            '<div class="fila-Dividido">' +
+                                '<input type="text" class="subinput-Dividido" placeholder="Pago 1" value="' + parte1 + '" onblur="formatearSubinputDividido(this); guardarTabla();">' +
+                                construirSelectMetodoPagoDividido(met1) +
                             '</div>' +
-                            '<div class="fila-diferido">' +
-                                '<input type="text" class="subinput-diferido" placeholder="Pago 2" value="' + parte2 + '" onblur="formatearSubinputDiferido(this); guardarTabla();">' +
-                                construirSelectMetodoPagoDiferido(met2) +
+                            '<div class="fila-Dividido">' +
+                                '<input type="text" class="subinput-Dividido" placeholder="Pago 2" value="' + parte2 + '" onblur="formatearSubinputDividido(this); guardarTabla();">' +
+                                construirSelectMetodoPagoDividido(met2) +
                             '</div>' +
                         '</div>';
                 } else {
@@ -1236,7 +1236,7 @@
                         '<option value="Tarjeta"' + (viaVal === 'Tarjeta' ? ' selected' : '') + '>Tarjeta</option>' +
                         '<option value="Transferencia"' + (viaVal === 'Transferencia' ? ' selected' : '') + '>Transferencia</option>' +
                         '<option value="No requerido"' + (viaVal === 'No requerido' ? ' selected' : '') + '>No requerido</option>' +
-                        '<option value="Diferido"' + (viaVal === 'Diferido' ? ' selected' : '') + '>Diferido</option>' +
+                        '<option value="Dividido"' + (viaVal === 'Dividido' ? ' selected' : '') + '>Dividido</option>' +
                     '</select>';
             } else if (i === 18) {
                 var pinVal = valor || generarPINUnico();
@@ -1862,8 +1862,8 @@
             var select = celda.querySelector("select");
             return select ? select.value : "";
         } else if (indice === 12) {
-            var subinputs = celda.querySelectorAll(".subinput-diferido");
-            var subselects = celda.querySelectorAll(".subselect-diferido");
+            var subinputs = celda.querySelectorAll(".subinput-Dividido");
+            var subselects = celda.querySelectorAll(".subselect-Dividido");
             if (subinputs.length > 0) {
                 var v1 = subinputs[0].value.trim();
                 var m1 = subselects[0] ? subselects[0].value : "";
