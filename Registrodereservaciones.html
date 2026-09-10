@@ -3,10 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <title>Registro de Reservaciones</title>
+    <!-- Librerías de captura y ordenamiento -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <!-- Librerías para Exportar a Excel y PDF -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
     <style>
         body {
@@ -47,7 +53,6 @@
             transition: background-color 0.3s, color 0.3s, border-color 0.3s;
         }
 
-        /* Botón para cambiar de modo */
         .btn-toggle-dark {
             background-color: #334155;
             color: #ffffff;
@@ -100,7 +105,6 @@
             transition: background-color 0.3s, color 0.3s, border-color 0.3s;
         }
 
-        /* ===== ESTILO PARA EL DRAG HANDLE (::) ===== */
         .drag-handle {
             cursor: grab;
             font-weight: bold;
@@ -123,7 +127,6 @@
             background-color: #e2e8f0 !important;
         }
 
-        /* ===== CONGELAR PRIMERA FILA ===== */
         th {
             position: sticky;
             top: 0;
@@ -135,7 +138,6 @@
             border-top: 1px solid #dee2e6;
         }
 
-        /* ===== CONGELAR PRIMERAS COLUMNAS (Mover, Checkbox, Nombre, Apellido) ===== */
         th:nth-child(1), td:nth-child(1) {
             position: sticky;
             left: 0;
@@ -290,19 +292,24 @@
         .acciones {
             display: flex;
             justify-content: center;
-            gap: 12px;
+            gap: 10px;
             margin-top: 20px;
             flex-wrap: wrap;
         }
 
         button {
-            padding: 10px 18px;
-            font-size: 14px;
+            padding: 10px 16px;
+            font-size: 13px;
             cursor: pointer;
             border: none;
             border-radius: 4px;
             color: white;
             font-weight: bold;
+            transition: opacity 0.2s;
+        }
+
+        button:hover {
+            opacity: 0.9;
         }
 
         .btn-agregar { background-color: #28a745; }
@@ -310,6 +317,10 @@
         .btn-wa { background-color: #25d366; color: white; }
         .btn-guardar { background-color: #007bff; }
         .btn-limpiar { background-color: #ffc107; color: #333; }
+        .btn-export-excel { background-color: #107c41; }
+        .btn-export-pdf { background-color: #b30b00; }
+        .btn-backup { background-color: #6f42c1; }
+        .btn-restore { background-color: #d97706; }
         .btn-regresar { background-color: #333; }
 
         /* Contenedor Oculto para Generar Imagen */
@@ -369,7 +380,6 @@
             white-space: pre-wrap;
         }
 
-        /* Modal Interactivo */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -442,9 +452,7 @@
             margin-top: 5px;
         }
 
-        /* ========================================================= */
-        /* ===== ESTILOS PARA MODO OSCURO ===== */
-        /* ========================================================= */
+        /* ===== MODO OSCURO ===== */
         body.dark-mode {
             background-color: #0f172a;
             color: #f8fafc;
@@ -587,6 +595,7 @@
             <option value="meseros">Meseros</option>
             <option value="anticipos">Anticipos</option>
             <option value="general">General</option>
+            <option value="copia_seguridad">Copia de seguridad</option>
         </select>
         
         <button id="btnModoOscuro" class="btn-toggle-dark" onclick="toggleModoOscuro()">🌙 Modo Oscuro</button>
@@ -595,11 +604,9 @@
     <div class="contenedor-tabla">
         <table id="tablaReservas">
             <thead>
-                <tr id="encabezadosTabla">
-                </tr>
+                <tr id="encabezadosTabla"></tr>
             </thead>
-            <tbody id="cuerpoTabla">
-            </tbody>
+            <tbody id="cuerpoTabla"></tbody>
         </table>
 
         <div id="menuExcel" class="menu-excel">
@@ -612,8 +619,7 @@
             <hr style="margin: 8px 0; border: 0; border-top: 1px solid #eee;">
             <div style="font-weight: bold; font-size: 11px; color: #888; margin-top: 4px;">SELECCIONAR VALORES:</div>
             
-            <div class="lista-checkboxes" id="contenedorCheckboxes">
-            </div>
+            <div class="lista-checkboxes" id="contenedorCheckboxes"></div>
 
             <div class="acciones-menu">
                 <button type="button" class="btn-guardar" onclick="aplicarFiltrosExcel()">Aplicar</button>
@@ -626,9 +632,17 @@
         <button type="button" class="btn-agregar" id="btnAgregarFila" onclick="agregarFila()">+ Agregar Fila</button>
         <button type="button" class="btn-eliminar" id="btnEliminarFilas" onclick="eliminarFilasSeleccionadas()">Eliminar Filas</button>
         <button type="button" class="btn-wa" id="btnEnviarWA" onclick="preguntarDestinatarioWA()">📲 Enviar por WhatsApp</button>
+        <button type="button" class="btn-export-excel" id="btnExportExcel" onclick="exportarExcel()">💾 Exportar a Excel</button>
+        <button type="button" class="btn-export-pdf" id="btnExportPDF" onclick="exportarPDF()">📄 Exportar a PDF</button>
+        <button type="button" class="btn-backup" id="btnBackup" onclick="descargarRespaldoJSON()">📥 Respaldar (JSON)</button>
+        
+        <!-- Input de archivo oculto y botón para restaurar -->
+        <input type="file" id="inputRestaurarJSON" accept=".json" style="display: none;" onchange="procesarRestauracionJSON(event)">
+        <button type="button" class="btn-restore" id="btnRestore" onclick="document.getElementById('inputRestaurarJSON').click()">📤 Restaurar (JSON)</button>
+        
         <button type="button" class="btn-guardar" id="btnGuardarCambios" onclick="guardarTabla(true)">Guardar Cambios</button>
-        <button type="button" class="btn-limpiar" onclick="limpiarFiltros()">Quitar Filtros</button>
-        <button type="button" class="btn-regresar" onclick="regresar()">Volver al menú</button>
+        <button type="button" class="btn-limpiar" id="btnLimpiarFiltros" onclick="limpiarFiltros()">Quitar Filtros</button>
+        <button type="button" class="btn-regresar" id="btnVolverMenu" onclick="regresar()">Volver al menú</button>
     </div>
 
     <div id="tarjetaVistaPrevia"></div>
@@ -636,9 +650,7 @@
     <div id="modalDestinatario" class="modal-overlay">
         <div class="modal-box">
             <h3>¿Para quién es la imagen?</h3>
-
             <hr style="margin: 15px 0;">
-
             <div class="modal-botones">
                 <button type="button" class="btn-opcion btn-equipo" onclick="seleccionarOpcionWA('equipo')">👥 Equipo de trabajo</button>
                 <button type="button" class="btn-opcion btn-comensal" onclick="seleccionarOpcionWA('comensal')">🍽️ Comensal</button>
@@ -648,7 +660,6 @@
     </div>
 
     <script>
-    // Inicialización de Firebase
     const firebaseConfig = {
         apiKey: "AIzaSyCI5yWdLu1Z3XJ-94KwU3qaEU3vCA5sZOQ",
         authDomain: "reservaciones-quijote.firebaseapp.com",
@@ -675,7 +686,6 @@
     var filtrosSeleccionados = {};
     var sortableInstance = null;
 
-    // ===== LÓGICA DE MODO OSCURO =====
     function toggleModoOscuro() {
         document.body.classList.toggle("dark-mode");
         var esOscuro = document.body.classList.contains("dark-mode");
@@ -792,7 +802,47 @@
         var btnWA = document.getElementById("btnEnviarWA");
         var btnAgregar = document.getElementById("btnAgregarFila");
         var btnGuardar = document.getElementById("btnGuardarCambios");
+        var btnExportExcel = document.getElementById("btnExportExcel");
+        var btnExportPDF = document.getElementById("btnExportPDF");
+        var btnBackup = document.getElementById("btnBackup");
+        var btnRestore = document.getElementById("btnRestore");
+        var btnLimpiarFiltros = document.getElementById("btnLimpiarFiltros");
+        var btnVolverMenu = document.getElementById("btnVolverMenu");
+
         var vistaActual = (document.getElementById("selectorVista") ? document.getElementById("selectorVista").value : "").toLowerCase();
+
+        // Control de los botones Respaldar y Restaurar (Sólo en 'copia_seguridad')
+        if (vistaActual === "copia_seguridad") {
+            btnBackup.style.display = "inline-block";
+            btnRestore.style.display = "inline-block";
+        } else {
+            btnBackup.style.display = "none";
+            btnRestore.style.display = "none";
+        }
+
+        // Control de los botones Exportar a Excel y Exportar a PDF (Sólo en 'general')
+        if (vistaActual === "general") {
+            btnExportExcel.style.display = "inline-block";
+            btnExportPDF.style.display = "inline-block";
+        } else {
+            btnExportExcel.style.display = "none";
+            btnExportPDF.style.display = "none";
+        }
+
+        // Si la vista es copia_seguridad, ocultamos el resto de los botones operativos
+        if (vistaActual === "copia_seguridad") {
+            btnAgregar.style.display = "none";
+            btnEliminar.style.display = "none";
+            btnWA.style.display = "none";
+            btnGuardar.style.display = "none";
+            btnLimpiarFiltros.style.display = "none";
+            btnVolverMenu.style.display = "none";
+            return;
+        }
+
+        // Resto de visibilidades comunes
+        btnLimpiarFiltros.style.display = "inline-block";
+        btnVolverMenu.style.display = "inline-block";
         
         if (esUsuarioMesero() || vistaActual === "nueva_reservacion" || vistaActual === "anticipos" || vistaActual === "meseros") {
             btnEliminar.style.display = "none";
@@ -825,6 +875,7 @@
 
         var ocultarPorVista = {
             "general": [],
+            "copia_seguridad": [],
             "nueva_reservacion": [19, 20],
             "anticipos": [7, 14, 15, 16],
             "meseros": [8, 20]
@@ -843,7 +894,7 @@
             }
         }
 
-        var esModoLectura = (vista === "meseros");
+        var esModoLectura = (vista === "meseros" || vista === "copia_seguridad");
 
         if (sortableInstance) {
             sortableInstance.option("disabled", esModoLectura || esUsuarioMesero());
@@ -950,12 +1001,10 @@
         var tbody = document.getElementById("cuerpoTabla");
         var nuevaFila = tbody.insertRow();
 
-        // Celda 0: Drag Handle (::)
         var celdaDrag = nuevaFila.insertCell(0);
         celdaDrag.innerHTML = '<div class="drag-handle">::</div>';
         celdaDrag.style.textAlign = "center";
 
-        // Celda 1: Checkbox
         var celdaCheck = nuevaFila.insertCell(1);
         celdaCheck.innerHTML = '<input type="checkbox" class="chk-fila">';
         celdaCheck.style.textAlign = "center";
@@ -1117,7 +1166,7 @@
 
     function preguntarDestinatarioWA() {
         var vistaActual = (document.getElementById("selectorVista") ? document.getElementById("selectorVista").value : "").toLowerCase();
-        if (esUsuarioMesero() || vistaActual === "nueva_reservacion" || vistaActual === "meseros") {
+        if (esUsuarioMesero() || vistaActual === "nueva_reservacion" || vistaActual === "meseros" || vistaActual === "copia_seguridad") {
             alert("No tienes permisos autorizados para enviar por WhatsApp.");
             return;
         }
@@ -1169,7 +1218,6 @@
             var comBarra = obtenerValorCelda(fila.cells[16], 16);
             var pin = obtenerValorCelda(fila.cells[18], 18);
 
-            // Toma automáticamente el número telefónico de la columna #phone de la primera fila seleccionada
             if (index === 0 && phone) {
                 primerTelefono = phone;
             }
@@ -1229,14 +1277,12 @@
             contenedorTarjeta.appendChild(bloque);
         });
 
-        // Formatear código de país para México si tiene 10 dígitos
         if (primerTelefono.length === 10) {
             primerTelefono = "52" + primerTelefono;
         }
 
         const canvas = await html2canvas(contenedorTarjeta);
 
-        // 1. Detección de adjuntos seleccionados
         var adjuntos = [];
         var chkDesayuno = document.getElementById('chkDesayuno');
         var chkComida = document.getElementById('chkComida');
@@ -1252,13 +1298,11 @@
             adjuntos.push("💳 Datos de Transferencia: " + chkInbursa.value);
         }
 
-        // 2. Construcción del texto
         var mensaje = "Buen día, adjunto información de su reservación.";
         if (adjuntos.length > 0) {
             mensaje += "\n\n*Documentos adjuntos:*\n" + adjuntos.join("\n");
         }
 
-        // 3. Copiar la imagen al portapapeles y abrir el destino correspondiente
         canvas.toBlob(async function(blob) {
             try {
                 await navigator.clipboard.write([
@@ -1268,17 +1312,14 @@
                 console.log("No se pudo copiar la imagen al portapapeles automáticamente.");
             }
 
-            // Detección de dispositivo móvil
             var esMovil = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
             var urlWA = "";
 
             if (esMovil) {
-                // Abre directamente la app de WhatsApp en celulares
                 urlWA = primerTelefono 
                     ? "whatsapp://send?phone=" + primerTelefono + "&text=" + encodeURIComponent(mensaje)
                     : "whatsapp://send?text=" + encodeURIComponent(mensaje);
             } else {
-                // Abre WhatsApp Web en computadoras
                 urlWA = primerTelefono 
                     ? "https://api.whatsapp.com/send?phone=" + primerTelefono + "&text=" + encodeURIComponent(mensaje)
                     : "https://web.whatsapp.com/";
@@ -1286,6 +1327,144 @@
 
             window.open(urlWA, "_blank");
         }, "image/png");
+    }
+
+    // ===== FUNCIONES DE EXPORTACIÓN Y RESPALDO =====
+
+    function obtenerMatrizDatosExportar() {
+        var tbody = document.getElementById("cuerpoTabla");
+        var encabezados = columnas.slice(2);
+        var matriz = [encabezados];
+
+        for (var i = 0; i < tbody.rows.length; i++) {
+            var fila = tbody.rows[i];
+            if (fila.style.display !== "none") {
+                var filaData = [];
+                for (var j = 2; j < 21; j++) {
+                    filaData.push(obtenerValorCelda(fila.cells[j], j));
+                }
+                matriz.push(filaData);
+            }
+        }
+        return matriz;
+    }
+
+    function exportarExcel() {
+        var datos = obtenerMatrizDatosExportar();
+        if (datos.length <= 1) {
+            alert("No hay datos para exportar.");
+            return;
+        }
+
+        var wb = XLSX.utils.book_new();
+        var ws = XLSX.utils.aoa_to_sheet(datos);
+        XLSX.utils.book_append_sheet(wb, ws, "Reservaciones");
+
+        var usuario = obtenerUsuarioActual() || "Quijote";
+        var fechaStr = new Date().toISOString().slice(0, 10);
+        XLSX.writeFile(wb, "Reservaciones_" + usuario + "_" + fechaStr + ".xlsx");
+    }
+
+    function exportarPDF() {
+        var datos = obtenerMatrizDatosExportar();
+        if (datos.length <= 1) {
+            alert("No hay datos para exportar.");
+            return;
+        }
+
+        const { jsPDF } = window.jspdf;
+        var doc = new jsPDF('landscape');
+
+        var usuario = obtenerUsuarioActual() || "Quijote";
+        var fechaStr = new Date().toLocaleDateString('es-MX');
+
+        doc.setFontSize(16);
+        doc.text("Reporte de Reservaciones - " + usuario, 14, 15);
+        doc.setFontSize(10);
+        doc.text("Fecha de generación: " + fechaStr, 14, 22);
+
+        var encabezados = [datos[0]];
+        var filas = datos.slice(1);
+
+        doc.autoTable({
+            head: encabezados,
+            body: filas,
+            startY: 26,
+            styles: { fontSize: 7, cellPadding: 2 },
+            headStyles: { fillColor: [16, 47, 39], textColor: [255, 255, 255] },
+            alternateRowStyles: { fillColor: [245, 245, 245] },
+            theme: 'grid'
+        });
+
+        doc.save("Reservaciones_" + usuario + "_" + fechaStr.replace(/\//g, '-') + ".pdf");
+    }
+
+    function descargarRespaldoJSON() {
+        var claveStorage = obtenerClaveUsuario();
+        if (!claveStorage) return;
+
+        db.ref(claveStorage).once('value').then(function(snapshot) {
+            var data = snapshot.val() || [];
+            var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
+            var downloadAnchor = document.createElement('a');
+            var fechaStr = new Date().toISOString().slice(0, 10);
+
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "Backup_Reservaciones_" + fechaStr + ".json");
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }).catch(function(err) {
+            alert("Error al descargar respaldo: " + err.message);
+        });
+    }
+
+    function procesarRestauracionJSON(event) {
+        var archivo = event.target.files[0];
+        if (!archivo) return;
+
+        var confirmacion = confirm("⚠️ ATENCIÓN: Al restaurar este archivo se reemplazarán los datos actuales por la versión guardada en el respaldo.\n\n¿Deseas continuar?");
+        
+        if (!confirmacion) {
+            event.target.value = "";
+            return;
+        }
+
+        var lector = new FileReader();
+        lector.onload = function(e) {
+            try {
+                var datosRestaurados = JSON.parse(e.target.result);
+
+                if (!Array.isArray(datosRestaurados)) {
+                    alert("El archivo JSON no tiene un formato válido para esta base de datos.");
+                    event.target.value = "";
+                    return;
+                }
+
+                var claveStorage = obtenerClaveUsuario();
+                if (!claveStorage) return;
+
+                localStorage.setItem(claveStorage, JSON.stringify(datosRestaurados));
+
+                db.ref(claveStorage).set(datosRestaurados)
+                    .then(function() {
+                        alert("¡Base de datos restaurada con éxito desde el archivo!");
+                        renderizarTabla(datosRestaurados);
+                        var vistaActual = document.getElementById("selectorVista").value;
+                        cambiarVista(vistaActual);
+                    })
+                    .catch(function(error) {
+                        alert("Error al actualizar la base de datos en la nube: " + error.message);
+                    });
+
+            } catch (err) {
+                alert("Error al leer el archivo JSON: El formato está corrupto o es incorrecto.");
+            }
+            
+            event.target.value = "";
+        };
+
+        lector.readAsText(archivo);
     }
 
     function actualizarDia(inputFecha) {
@@ -1331,7 +1510,7 @@
     function eliminarFilasSeleccionadas() {
         var vistaActual = (document.getElementById("selectorVista") ? document.getElementById("selectorVista").value : "").toLowerCase();
         
-        if (esUsuarioMesero() || vistaActual === "nueva_reservacion" || vistaActual === "anticipos" || vistaActual === "meseros") {
+        if (esUsuarioMesero() || vistaActual === "nueva_reservacion" || vistaActual === "anticipos" || vistaActual === "meseros" || vistaActual === "copia_seguridad") {
             alert("No tienes permisos autorizados para eliminar filas.");
             return;
         }
@@ -1465,7 +1644,7 @@
 
     function agregarFila() {
         var vistaActual = (document.getElementById("selectorVista") ? document.getElementById("selectorVista").value : "").toLowerCase();
-        if (vistaActual === "anticipos" || vistaActual === "meseros") {
+        if (vistaActual === "anticipos" || vistaActual === "meseros" || vistaActual === "copia_seguridad") {
             alert("No se permite agregar filas desde esta vista.");
             return;
         }
@@ -1510,7 +1689,7 @@
 
     function guardarTabla(alerta) {
         var vistaActual = (document.getElementById("selectorVista") ? document.getElementById("selectorVista").value : "").toLowerCase();
-        if (vistaActual === "meseros") return;
+        if (vistaActual === "meseros" || vistaActual === "copia_seguridad") return;
 
         var claveStorage = obtenerClaveUsuario();
         if (!claveStorage) return;
@@ -1549,7 +1728,6 @@
         window.location.href = "index.html";
     }
 
-    // ===== NAVEGACIÓN CON ENTER EN CAMPOS DE LA TABLA =====
     document.addEventListener('DOMContentLoaded', () => {
         document.body.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
