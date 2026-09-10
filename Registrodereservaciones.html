@@ -1728,22 +1728,76 @@
         window.location.href = "index.html";
     }
 
+    // ===== GUARDADO AUTOMÁTICO Y NAVEGACIÓN MEJORADA CON ENTER =====
     document.addEventListener('DOMContentLoaded', () => {
+        let temporizadorGuardadoAuto;
+
+        function ejecutarGuardadoAuto() {
+            guardarTabla(false);
+            console.log("✓ Cambios guardados automáticamente");
+        }
+
+        const cuerpoTabla = document.getElementById('cuerpoTabla');
+        if (cuerpoTabla) {
+            // Guardado automático con delay al editar texto o celdas
+            cuerpoTabla.addEventListener('input', () => {
+                clearTimeout(temporizadorGuardadoAuto);
+                temporizadorGuardadoAuto = setTimeout(ejecutarGuardadoAuto, 800);
+            });
+
+            // Guardado inmediato al cambiar opciones en select/desplegables
+            cuerpoTabla.addEventListener('change', () => {
+                clearTimeout(temporizadorGuardadoAuto);
+                ejecutarGuardadoAuto();
+            });
+        }
+
+        // Manejo de la tecla Enter para navegar y crear filas
         document.body.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 const inputs = Array.from(document.querySelectorAll('table input:not([type="checkbox"]):not([disabled]), table select:not([disabled]), table [contenteditable="true"]'))
-                    .filter(el => el.offsetWidth > 0 && el.offsetHeight > 0);
+                    .filter(el => {
+                        const celda = el.closest('td, th');
+                        return celda && !celda.classList.contains('columna-oculta') && getComputedStyle(celda).display !== 'none';
+                    });
 
                 const currentIndex = inputs.indexOf(e.target);
 
                 if (currentIndex !== -1) {
                     e.preventDefault();
 
-                    const nextInput = inputs[currentIndex + 1];
-                    if (nextInput) {
-                        nextInput.focus();
-                        if (typeof nextInput.select === 'function') {
-                            nextInput.select();
+                    // Si se presiona Enter en el último campo visible de la tabla
+                    if (currentIndex === inputs.length - 1) {
+                        const vistaActual = (document.getElementById("selectorVista") ? document.getElementById("selectorVista").value : "").toLowerCase();
+                        
+                        if (vistaActual !== "anticipos" && vistaActual !== "copia_seguridad") {
+                            agregarFila();
+                            ejecutarGuardadoAuto();
+
+                            setTimeout(() => {
+                                const nuevosInputs = Array.from(document.querySelectorAll('table input:not([type="checkbox"]):not([disabled]), table select:not([disabled]), table [contenteditable="true"]'))
+                                    .filter(el => {
+                                        const celda = el.closest('td, th');
+                                        return celda && !celda.classList.contains('columna-oculta') && getComputedStyle(celda).display !== 'none';
+                                    });
+                                
+                                const siguienteCampo = nuevosInputs[currentIndex + 1];
+                                if (siguienteCampo) {
+                                    siguienteCampo.focus();
+                                    if (typeof siguienteCampo.select === 'function') {
+                                        siguienteCampo.select();
+                                    }
+                                }
+                            }, 50);
+                        }
+                    } else {
+                        // Pasar al siguiente campo visible
+                        const nextInput = inputs[currentIndex + 1];
+                        if (nextInput) {
+                            nextInput.focus();
+                            if (typeof nextInput.select === 'function') {
+                                nextInput.select();
+                            }
                         }
                     }
                 }
