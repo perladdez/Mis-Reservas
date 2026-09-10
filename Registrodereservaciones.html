@@ -289,6 +289,30 @@
             font-weight: bold;
         }
 
+        /* Contenedor para dividir la celda de Cantidad Anticipo cuando es Diferido */
+        .contenedor-diferido {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            width: 100%;
+        }
+
+        .subinput-diferido {
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 3px;
+            padding: 2px 4px;
+            font-size: 13px;
+            width: 90%;
+            background: #ffffff;
+            color: inherit;
+        }
+
+        body.dark-mode .subinput-diferido {
+            background: #0f172a;
+            border-color: #475569 !important;
+            color: #f8fafc;
+        }
+
         .acciones {
             display: flex;
             justify-content: center;
@@ -997,6 +1021,53 @@
         });
     }
 
+    function cambiarViaAnticipo(select) {
+        var fila = select.parentElement.parentElement;
+        var celdaCantidad = fila.cells[12];
+        var viaVal = select.value;
+
+        if (viaVal === "Diferido") {
+            var valorActual = obtenerValorCelda(celdaCantidad, 12);
+            var parte1 = "";
+            var parte2 = "";
+
+            if (valorActual.includes(" / ")) {
+                var partes = valorActual.split(" / ");
+                parte1 = partes[0] || "";
+                parte2 = partes[1] || "";
+            } else {
+                parte1 = valorActual;
+            }
+
+            celdaCantidad.removeAttribute("contenteditable");
+            celdaCantidad.innerHTML = 
+                '<div class="contenedor-diferido">' +
+                    '<input type="text" class="subinput-diferido" placeholder="Anticipo 1" value="' + parte1 + '" onblur="formatearSubinputDiferido(this); guardarTabla();">' +
+                    '<input type="text" class="subinput-diferido" placeholder="Anticipo 2" value="' + parte2 + '" onblur="formatearSubinputDiferido(this); guardarTabla();">' +
+                '</div>';
+        } else {
+            var valorConcatenado = obtenerValorCelda(celdaCantidad, 12);
+            var valorFinal = valorConcatenado;
+            if (valorConcatenado.includes(" / ")) {
+                valorFinal = valorConcatenado.split(" / ")[0];
+            }
+
+            celdaCantidad.contentEditable = "true";
+            celdaCantidad.innerText = formatearDineroSinDecimales(valorFinal);
+            celdaCantidad.onblur = function() {
+                this.innerText = formatearDineroSinDecimales(this.innerText);
+                guardarTabla();
+            };
+        }
+        guardarTabla();
+    }
+
+    function formatearSubinputDiferido(input) {
+        if (input.value) {
+            input.value = formatearDineroSinDecimales(input.value);
+        }
+    }
+
     function crearFilaHTML(datos) {
         var tbody = document.getElementById("cuerpoTabla");
         var nuevaFila = tbody.insertRow();
@@ -1008,6 +1079,8 @@
         var celdaCheck = nuevaFila.insertCell(1);
         celdaCheck.innerHTML = '<input type="checkbox" class="chk-fila">';
         celdaCheck.style.textAlign = "center";
+
+        var viaAnticipoInicial = datos ? (datos[11] || "") : ""; // Posición 13 - 2 = 11
 
         for (var i = 2; i < 21; i++) {
             var celda = nuevaFila.insertCell(i);
@@ -1047,22 +1120,40 @@
                     '<option value="Terminado"' + (statusVal === 'Terminado' ? ' selected' : '') + '>Terminado</option>' +
                 '</select>';
             } else if (i === 12) {
-                celda.contentEditable = "true";
-                celda.innerText = formatearDineroSinDecimales(valor);
-                celda.onblur = function() {
-                    this.innerText = formatearDineroSinDecimales(this.innerText);
-                    guardarTabla();
-                };
+                if (viaAnticipoInicial === "Diferido") {
+                    var parte1 = "";
+                    var parte2 = "";
+                    if (valor.includes(" / ")) {
+                        var partes = valor.split(" / ");
+                        parte1 = partes[0] || "";
+                        parte2 = partes[1] || "";
+                    } else {
+                        parte1 = valor;
+                    }
+
+                    celda.innerHTML = 
+                        '<div class="contenedor-diferido">' +
+                            '<input type="text" class="subinput-diferido" placeholder="Anticipo 1" value="' + parte1 + '" onblur="formatearSubinputDiferido(this); guardarTabla();">' +
+                            '<input type="text" class="subinput-diferido" placeholder="Anticipo 2" value="' + parte2 + '" onblur="formatearSubinputDiferido(this); guardarTabla();">' +
+                        '</div>';
+                } else {
+                    celda.contentEditable = "true";
+                    celda.innerText = formatearDineroSinDecimales(valor);
+                    celda.onblur = function() {
+                        this.innerText = formatearDineroSinDecimales(this.innerText);
+                        guardarTabla();
+                    };
+                }
             } else if (i === 13) {
                 var viaVal = valor || "";
                 celda.innerHTML = 
-                    '<select class="celda-select" onchange="guardarTabla();">' +
+                    '<select class="celda-select" onchange="cambiarViaAnticipo(this);">' +
                         '<option value=""' + (viaVal === '' ? ' selected' : '') + '></option>' +
                         '<option value="Efectivo"' + (viaVal === 'Efectivo' ? ' selected' : '') + '>Efectivo</option>' +
                         '<option value="Tarjeta"' + (viaVal === 'Tarjeta' ? ' selected' : '') + '>Tarjeta</option>' +
                         '<option value="Transferencia"' + (viaVal === 'Transferencia' ? ' selected' : '') + '>Transferencia</option>' +
-                        '<option value="Otros"' + (viaVal === 'Otros' ? ' selected' : '') + '>Otros</option>' +
                         '<option value="No requerido"' + (viaVal === 'No requerido' ? ' selected' : '') + '>No requerido</option>' +
+                        '<option value="Diferido"' + (viaVal === 'Diferido' ? ' selected' : '') + '>Diferido</option>' +
                     '</select>';
             } else if (i === 18) {
                 var pinVal = valor || generarPINUnico();
@@ -1687,6 +1778,15 @@
         } else if (indice === 10 || indice === 11 || indice === 13 || indice === 19 || indice === 20) {
             var select = celda.querySelector("select");
             return select ? select.value : "";
+        } else if (indice === 12) {
+            var subinputs = celda.querySelectorAll(".subinput-diferido");
+            if (subinputs.length > 0) {
+                var v1 = subinputs[0].value.trim();
+                var v2 = subinputs[1].value.trim();
+                if (v1 && v2) return v1 + " / " + v2;
+                return v1 || v2 || "";
+            }
+            return celda.innerText.trim();
         } else {
             return celda.innerText.trim();
         }
@@ -1771,7 +1871,7 @@
                 if (currentIndex !== -1) {
                     e.preventDefault();
 
-// Si se presiona Enter en el último campo visible de la tabla
+                    // Si se presiona Enter en el último campo visible de la tabla
                     if (currentIndex === inputs.length - 1) {
                         const vistaActual = (document.getElementById("selectorVista") ? document.getElementById("selectorVista").value : "").toLowerCase();
                         
