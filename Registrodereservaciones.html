@@ -289,7 +289,6 @@
             font-weight: bold;
         }
 
-        /* Contenedor para dividir la celda de Cantidad Anticipo cuando es Dividido */
         .contenedor-Dividido {
             display: flex;
             flex-direction: column;
@@ -366,7 +365,6 @@
         .btn-restore { background-color: #d97706; }
         .btn-regresar { background-color: #333; }
 
-        /* Contenedor Oculto para Generar Imagen */
         #tarjetaVistaPrevia {
             position: absolute;
             top: -9999px;
@@ -495,7 +493,6 @@
             margin-top: 5px;
         }
 
-        /* ===== MODO OSCURO ===== */
         body.dark-mode {
             background-color: #0f172a;
             color: #f8fafc;
@@ -553,11 +550,6 @@
         body.dark-mode thead th:nth-child(3),
         body.dark-mode thead th:nth-child(4) {
             background-color: #475569;
-        }
-
-        body.dark-mode td[style*="background-color: rgb(240, 240, 240)"],
-        body.dark-mode td[style*="background-color: #f0f0f0"] {
-            background-color: #334155 !important;
         }
 
         select option {
@@ -679,7 +671,6 @@
         <button type="button" class="btn-export-pdf" id="btnExportPDF" onclick="exportarPDF()">📄 Exportar a PDF</button>
         <button type="button" class="btn-backup" id="btnBackup" onclick="descargarRespaldoJSON()">📥 Respaldar (JSON)</button>
         
-        <!-- Input de archivo oculto y botón para restaurar -->
         <input type="file" id="inputRestaurarJSON" accept=".json" style="display: none;" onchange="procesarRestauracionJSON(event)">
         <button type="button" class="btn-restore" id="btnRestore" onclick="document.getElementById('inputRestaurarJSON').click()">📤 Restaurar (JSON)</button>
         
@@ -716,6 +707,11 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+
+    // Contraseñas configurables para las vistas protegidas
+    var contrasenaGeneral = "Quijote2026*";
+    var contrasenaBackup = "Backup2026*";
+    var vistaAnterior = "nueva_reservacion";
 
     var columnas = [
         "", "", "Nombre", "Apellido", "Fecha", "Día", "Hora", 
@@ -854,7 +850,6 @@
 
         var vistaActual = (document.getElementById("selectorVista") ? document.getElementById("selectorVista").value : "").toLowerCase();
 
-        // Control de los botones Respaldar y Restaurar (Sólo en 'copia_seguridad')
         if (vistaActual === "copia_seguridad") {
             btnBackup.style.display = "inline-block";
             btnRestore.style.display = "inline-block";
@@ -863,7 +858,6 @@
             btnRestore.style.display = "none";
         }
 
-        // Control de los botones Exportar a Excel y Exportar a PDF (Sólo en 'general')
         if (vistaActual === "general") {
             btnExportExcel.style.display = "inline-block";
             btnExportPDF.style.display = "inline-block";
@@ -872,7 +866,6 @@
             btnExportPDF.style.display = "none";
         }
 
-        // Si la vista es copia_seguridad, ocultamos el resto de los botones operativos
         if (vistaActual === "copia_seguridad") {
             btnAgregar.style.display = "none";
             btnEliminar.style.display = "none";
@@ -883,7 +876,6 @@
             return;
         }
 
-        // Resto de visibilidades comunes
         btnLimpiarFiltros.style.display = "inline-block";
         btnVolverMenu.style.display = "inline-block";
         
@@ -913,6 +905,27 @@
     }
 
     function cambiarVista(vista) {
+        var selector = document.getElementById("selectorVista");
+
+        // Validación de contraseña para vistas protegidas
+        if (vista === "general") {
+            var pass = prompt("Por favor, introduce la contraseña para acceder a la vista General:");
+            if (pass !== contrasenaGeneral) {
+                alert("Contraseña incorrecta.");
+                selector.value = window.vistaAnterior || "nueva_reservacion";
+                return;
+            }
+        } else if (vista === "copia_seguridad") {
+            var pass = prompt("Por favor, introduce la contraseña para acceder a la Copia de seguridad:");
+            if (pass !== contrasenaBackup) {
+                alert("Contraseña incorrecta.");
+                selector.value = window.vistaAnterior || "nueva_reservacion";
+                return;
+            }
+        }
+
+        window.vistaAnterior = vista;
+
         var tabla = document.getElementById("tablaReservas");
         var filas = tabla.rows;
 
@@ -1138,7 +1151,7 @@
         celdaCheck.innerHTML = '<input type="checkbox" class="chk-fila">';
         celdaCheck.style.textAlign = "center";
 
-        var viaAnticipoInicial = datos ? (datos[11] || "") : ""; // Posición 13 - 2 = 11
+        var viaAnticipoInicial = datos ? (datos[11] || "") : "";
 
         for (var i = 2; i < 21; i++) {
             var celda = nuevaFila.insertCell(i);
@@ -1148,12 +1161,10 @@
                 celda.innerHTML = '<input type="date" value="' + valor + '" oninput="actualizarDia(this);" onblur="validarYReordenar(this);">';
             } else if (i === 5) {
                 celda.innerText = capitalizarPrimerLetra(valor);
-                celda.style.backgroundColor = "#f0f0f0";
             } else if (i === 6) {
                 celda.innerHTML = '<input type="time" value="' + valor + '" oninput="actualizarMenu(this);" onblur="validarYReordenar(this);">';
             } else if (i === 7) {
                 celda.innerText = valor;
-                celda.style.backgroundColor = "#f0f0f0";
             } else if (i === 10) {
                 var areaVal = valor || "";
                 celda.innerHTML = 
@@ -1241,7 +1252,6 @@
             } else if (i === 18) {
                 var pinVal = valor || generarPINUnico();
                 celda.innerText = pinVal;
-                celda.style.backgroundColor = "#f0f0f0";
             } else if (i === 19) {
                 var altaVal = valor || "";
                 celda.innerHTML = 
@@ -1502,8 +1512,6 @@
             window.open(urlWA, "_blank");
         }, "image/png");
     }
-
-    // ===== FUNCIONES DE EXPORTACIÓN Y RESPALDO =====
 
     function obtenerMatrizDatosExportar() {
         var seleccionados = document.querySelectorAll(".chk-fila:checked");
@@ -1923,7 +1931,6 @@
         window.location.href = "index.html";
     }
 
-    // ===== GUARDADO AUTOMÁTICO Y NAVEGACIÓN MEJORADA CON ENTER =====
     document.addEventListener('DOMContentLoaded', () => {
         let temporizadorGuardadoAuto;
 
@@ -1934,20 +1941,17 @@
 
         const cuerpoTabla = document.getElementById('cuerpoTabla');
         if (cuerpoTabla) {
-            // Guardado automático con delay al editar texto o celdas
             cuerpoTabla.addEventListener('input', () => {
                 clearTimeout(temporizadorGuardadoAuto);
                 temporizadorGuardadoAuto = setTimeout(ejecutarGuardadoAuto, 800);
             });
 
-            // Guardado inmediato al cambiar opciones en select/desplegables
             cuerpoTabla.addEventListener('change', () => {
                 clearTimeout(temporizadorGuardadoAuto);
                 ejecutarGuardadoAuto();
             });
         }
 
-        // Manejo de la tecla Enter para navegar y crear filas
         document.body.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 const inputs = Array.from(document.querySelectorAll('table input:not([type="checkbox"]):not([disabled]), table select:not([disabled]), table [contenteditable="true"]'))
@@ -1961,7 +1965,6 @@
                 if (currentIndex !== -1) {
                     e.preventDefault();
 
-                    // Si se presiona Enter en el último campo visible de la tabla
                     if (currentIndex === inputs.length - 1) {
                         const vistaActual = (document.getElementById("selectorVista") ? document.getElementById("selectorVista").value : "").toLowerCase();
                         
@@ -1986,7 +1989,6 @@
                             }, 50);
                         }
                     } else {
-                        // Pasar al siguiente campo visible
                         const nextInput = inputs[currentIndex + 1];
                         if (nextInput) {
                             nextInput.focus();
