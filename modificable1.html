@@ -356,7 +356,7 @@
 
         .btn-agregar { background-color: #28a745; }
         .btn-eliminar { background-color: #dc3545; }
-        .btn-wa { background-color: #25d366; color: white; }
+        .btn-wa { background-color: #25d366; color: white; font-size: 16px; padding: 8px 14px; }
         .btn-guardar { background-color: #007bff; }
         .btn-limpiar { background-color: #ffc107; color: #333; }
         .btn-export-excel { background-color: #107c41; }
@@ -664,17 +664,17 @@
     </div>
 
     <div class="acciones">
-        <button type="button" class="btn-agregar" id="btnAgregarFila" onclick="agregarFila()">+ Agregar Fila</button>
-        <button type="button" class="btn-eliminar" id="btnEliminarFilas" onclick="eliminarFilasSeleccionadas()">Eliminar Filas</button>
-        <button type="button" class="btn-wa" id="btnEnviarWA" onclick="preguntarDestinatarioWA()">📲 Enviar por WhatsApp</button>
-        <button type="button" class="btn-export-excel" id="btnExportExcel" onclick="exportarExcel()">💾 Exportar a Excel</button>
-        <button type="button" class="btn-export-pdf" id="btnExportPDF" onclick="exportarPDF()">📄 Exportar a PDF</button>
+        <button type="button" class="btn-agregar" id="btnAgregarFila" onclick="agregarFila()">+ Agregar</button>
+        <button type="button" class="btn-eliminar" id="btnEliminarFilas" onclick="eliminarFilasSeleccionadas()">Eliminar</button>
+        <button type="button" class="btn-wa" id="btnEnviarWA" onclick="preguntarDestinatarioWA()" title="Enviar por WhatsApp">📲</button>
+        <button type="button" class="btn-export-excel" id="btnExportExcel" onclick="exportarExcel()">Exportar a Excel</button>
+        <button type="button" class="btn-export-pdf" id="btnExportPDF" onclick="exportarPDF()">Exportar a PDF</button>
         <button type="button" class="btn-backup" id="btnBackup" onclick="descargarRespaldoJSON()">📥 Respaldar (JSON)</button>
         
         <input type="file" id="inputRestaurarJSON" accept=".json" style="display: none;" onchange="procesarRestauracionJSON(event)">
         <button type="button" class="btn-restore" id="btnRestore" onclick="document.getElementById('inputRestaurarJSON').click()">📤 Restaurar (JSON)</button>
         
-        <button type="button" class="btn-guardar" id="btnGuardarCambios" onclick="guardarTabla(true)">Guardar Cambios</button>
+        <button type="button" class="btn-guardar" id="btnGuardarCambios" onclick="guardarTabla(true)">Guardar</button>
         <button type="button" class="btn-limpiar" id="btnLimpiarFiltros" onclick="limpiarFiltros()">Quitar Filtros</button>
         <button type="button" class="btn-regresar" id="btnVolverMenu" onclick="regresar()">Volver al menú</button>
     </div>
@@ -1454,10 +1454,14 @@
                     '</div>';
             }
 
+            var tituloEncabezado = (tipoDestinatario === "equipo") 
+                ? "El Quijote Steak House #" + (index + 1) 
+                : "El Quijote Steak House";
+
             var bloque = document.createElement("div");
             bloque.className = "bloque-tarjeta";
             bloque.innerHTML = 
-                '<h2>Detalle de Reservación #' + (index + 1) + '</h2>' +
+                '<h2>' + tituloEncabezado + '</h2>' +
                 '<div class="item-tarjeta"><span class="etiqueta">Cliente:</span><span class="valor">' + nombre + ' ' + apellido + '</span></div>' +
                 '<div class="item-tarjeta"><span class="etiqueta">Número de personas:</span><span class="valor">' + (personas || "1") + '</span></div>' +
                 '<div class="item-tarjeta"><span class="etiqueta">Día:</span><span class="valor">' + diaFormateado + '</span></div>' +
