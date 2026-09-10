@@ -713,6 +713,10 @@
     var contrasenaBackup = "Backup2026*";
     var vistaAnterior = "nueva_reservacion";
 
+    // Variables globales para recordar la autenticación en la sesión actual
+    window.sesionGeneralAutenticada = false;
+    window.sesionBackupAutenticada = false;
+
     var columnas = [
         "", "", "Nombre", "Apellido", "Fecha", "Día", "Hora", 
         "Menú", "#phone", "#p", "Área", "Status", 
@@ -907,20 +911,26 @@
     function cambiarVista(vista) {
         var selector = document.getElementById("selectorVista");
 
-        // Validación de contraseña para vistas protegidas
+        // Validación de contraseña solo si la sesión no ha sido autenticada previamente
         if (vista === "general") {
-            var pass = prompt("Por favor, introduce la contraseña para acceder a la vista General:");
-            if (pass !== contrasenaGeneral) {
-                alert("Contraseña incorrecta.");
-                selector.value = window.vistaAnterior || "nueva_reservacion";
-                return;
+            if (!window.sesionGeneralAutenticada) {
+                var pass = prompt("Por favor, introduce la contraseña para acceder a la vista General:");
+                if (pass !== contrasenaGeneral) {
+                    alert("Contraseña incorrecta.");
+                    selector.value = window.vistaAnterior || "nueva_reservacion";
+                    return;
+                }
+                window.sesionGeneralAutenticada = true;
             }
         } else if (vista === "copia_seguridad") {
-            var pass = prompt("Por favor, introduce la contraseña para acceder a la Copia de seguridad:");
-            if (pass !== contrasenaBackup) {
-                alert("Contraseña incorrecta.");
-                selector.value = window.vistaAnterior || "nueva_reservacion";
-                return;
+            if (!window.sesionBackupAutenticada) {
+                var pass = prompt("Por favor, introduce la contraseña para acceder a la Copia de seguridad:");
+                if (pass !== contrasenaBackup) {
+                    alert("Contraseña incorrecta.");
+                    selector.value = window.vistaAnterior || "nueva_reservacion";
+                    return;
+                }
+                window.sesionBackupAutenticada = true;
             }
         }
 
@@ -1838,7 +1848,6 @@
 
         crearFilaHTML(["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""]);
         
-        // Aplicar la ocultación de columnas directamente sin llamar a cambiarVista()
         var tabla = document.getElementById("tablaReservas");
         var filas = tabla.rows;
         var ocultarPorVista = {
