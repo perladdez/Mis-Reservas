@@ -1,109 +1,1915 @@
 <!DOCTYPE html>
-<html>
-<head> <meta charset="UTF-8">
-	<title> Reservas previas</title>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Registro de Reservaciones</title>
+    <!-- Librerías de captura y ordenamiento -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <!-- Librerías para Exportar a Excel y PDF -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
- <style>
+    <style>
         body {
             font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 40px;
+            padding: 10px 20px 20px 20px;
             margin: 0;
-            background-color: #f5f5f5;
-        }
-
-        h1 {
+            background-color: #f8f9fa;
             color: #333;
-            margin-bottom: 20px;
+            transition: background-color 0.3s, color 0.3s;
         }
 
-        /* Estilos visuales de la tabla */
+        .contenedor-vistas {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            background: #ffffff;
+            padding: 12px 16px;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: background-color 0.3s;
+        }
+
+        .contenedor-vistas label {
+            font-weight: bold;
+            color: #333;
+            font-size: 14px;
+            transition: color 0.3s;
+        }
+
+        .contenedor-vistas select {
+            padding: 6px 12px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+            background-color: #f8f9fa;
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+        }
+
+        .btn-toggle-dark {
+            background-color: #334155;
+            color: #ffffff;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            margin-left: auto;
+            transition: background-color 0.2s;
+        }
+
+        .btn-toggle-dark:hover {
+            background-color: #475569;
+        }
+
+        .columna-oculta {
+            display: none !important;
+        }
+
+        .contenedor-tabla {
+            overflow: auto;
+            max-height: 80vh;
+            background: white;
+            border-radius: 6px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: relative;
+            transition: background-color 0.3s;
+        }
+
         table {
-            border-collapse: collapse;
-            width: 80%;
-            max-width: 900px;
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+            min-width: 1700px;
+            font-size: 14px;
             background-color: #ffffff;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            border-radius: 8px;
-            overflow: hidden;
+            transition: background-color 0.3s;
         }
 
         th, td {
-            padding: 14px 20px;
+            padding: 8px 10px;
+            border-right: 1px solid #dee2e6;
+            border-bottom: 1px solid #dee2e6;
             text-align: left;
-            border-bottom: 1px solid #ddd;
+            vertical-align: top;
+            background-color: #ffffff;
+            color: #333;
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+        }
+
+        .drag-handle {
+            cursor: grab;
+            font-weight: bold;
             font-size: 16px;
+            color: #888;
+            user-select: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+        }
+
+        .drag-handle:active {
+            cursor: grabbing;
+            color: #007bff;
+        }
+
+        .sortable-ghost {
+            opacity: 0.4;
+            background-color: #e2e8f0 !important;
         }
 
         th {
-            background-color: #333;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background-color: #e9ecef;
+            color: #495057;
+            font-weight: bold;
+            user-select: none;
+            border-top: 1px solid #dee2e6;
+        }
+
+        th:nth-child(1), td:nth-child(1) {
+            position: sticky;
+            left: 0;
+            width: 25px;
+            min-width: 25px;
+        }
+
+        th:nth-child(2), td:nth-child(2) {
+            position: sticky;
+            left: 46px;
+            width: 30px;
+            min-width: 30px;
+        }
+
+        th:nth-child(3), td:nth-child(3) {
+            position: sticky;
+            left: 97px;
+            min-width: 120px;
+        }
+
+        th:nth-child(4), td:nth-child(4) {
+            position: sticky;
+            left: 238px;
+            min-width: 120px;
+            box-shadow: 2px 0 5px -1px rgba(0,0,0,0.15);
+        }
+
+        tbody td:nth-child(1), tbody td:nth-child(2), tbody td:nth-child(3), tbody td:nth-child(4) {
+            z-index: 5;
+        }
+
+        thead th:nth-child(1), thead th:nth-child(2), thead th:nth-child(3), thead th:nth-child(4) {
+            z-index: 15;
+            background-color: #d1d5db;
+        }
+
+        .th-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn-filtro {
+            background: #cbd5e1;
+            border: 1px solid #94a3b8;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11px;
+            padding: 2px 5px;
+            margin-left: 5px;
+        }
+
+        .btn-filtro:hover {
+            background: #94a3b8;
             color: white;
+        }
+
+        .menu-excel {
+            display: none;
+            position: fixed;
+            background-color: #ffffff;
+            border: 1px solid #ccc;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            padding: 12px;
+            z-index: 9999;
+            width: 260px;
+            font-size: 13px;
+            border-radius: 6px;
+        }
+
+        .menu-excel input[type="text"],
+        .menu-excel input[type="search"] {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 6px 8px;
+            margin-top: 6px;
+            margin-bottom: 6px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .menu-excel div.opcion-orden {
+            padding: 8px 6px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .menu-excel div.opcion-orden:hover {
+            background-color: #f1f5f9;
+        }
+
+        .lista-checkboxes {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            margin-top: 8px;
+            margin-bottom: 12px;
+            padding: 8px;
+            background: #fafafa;
+            border-radius: 4px;
+        }
+
+        .lista-checkboxes label {
+            display: block;
+            margin-bottom: 6px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .acciones-menu {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+        }
+
+        .acciones-menu button {
+            padding: 6px 14px;
+            font-size: 12px;
+        }
+
+        td[contenteditable="true"]:focus {
+            outline: 2px solid #007bff;
+            background-color: #ffffff;
+        }
+
+        input[type="date"], input[type="time"], select.celda-select, select.status-select {
+            border: none !important;
+            background: transparent !important;
+            font-family: inherit;
+            font-size: 14px;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+            color: inherit;
+            outline: none !important;
+            box-shadow: none !important;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+        }
+
+        select.status-select {
+            font-weight: bold;
+        }
+
+        /* Contenedor para dividir la celda de Cantidad Anticipo cuando es Diferido */
+        .contenedor-diferido {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            width: 100%;
+        }
+
+        .subinput-diferido {
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 3px;
+            padding: 2px 4px;
+            font-size: 13px;
+            width: 90%;
+            background: #ffffff;
+            color: inherit;
+        }
+
+        body.dark-mode .subinput-diferido {
+            background: #0f172a;
+            border-color: #475569 !important;
+            color: #f8fafc;
+        }
+
+        .acciones {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 10px 16px;
+            font-size: 13px;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            font-weight: bold;
+            transition: opacity 0.2s;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .btn-agregar { background-color: #28a745; }
+        .btn-eliminar { background-color: #dc3545; }
+        .btn-wa { background-color: #25d366; color: white; }
+        .btn-guardar { background-color: #007bff; }
+        .btn-limpiar { background-color: #ffc107; color: #333; }
+        .btn-export-excel { background-color: #107c41; }
+        .btn-export-pdf { background-color: #b30b00; }
+        .btn-backup { background-color: #6f42c1; }
+        .btn-restore { background-color: #d97706; }
+        .btn-regresar { background-color: #333; }
+
+        /* Contenedor Oculto para Generar Imagen */
+        #tarjetaVistaPrevia {
+            position: absolute;
+            top: -9999px;
+            left: -9999px;
+            width: 600px;
+            background: #102F27;
+            color: #FFFFFF;
+            padding: 30px;
+            border-radius: 14px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .bloque-tarjeta {
+            background: #185844;
+            padding: 22px;
+            border-radius: 10px;
+            border: 1px solid #78947F;
+        }
+
+        .bloque-tarjeta h2 {
+            margin: 0 0 16px 0;
+            text-align: center;
+            color: #F2EBDD;
+            border-bottom: 2px solid #78947F;
+            padding-bottom: 10px;
+            font-size: 27px;
+        }
+
+        .item-tarjeta {
+            display: flex;
+            justify-content: space-between;
+            padding: 9px 0;
+            border-bottom: 1px dashed #78947F;
+            font-size: 21px;
+        }
+
+        .item-tarjeta:last-child {
+            border-bottom: none;
+        }
+
+        .item-tarjeta span.etiqueta {
+            color: #FFFFFF;
+            font-weight: bold;
+        }
+
+        .item-tarjeta span.valor {
+            font-weight: bold;
+            color: #FFFFFF;
+            text-align: right;
+            white-space: pre-wrap;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-box {
+            background: white;
+            padding: 24px;
+            border-radius: 10px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: background-color 0.3s;
+        }
+
+        .modal-box h3 {
+            margin-top: 0;
+            color: #1e293b;
             font-size: 18px;
         }
 
-        tr:hover {
-            background-color: #f1f1f1;
+        .modal-box p {
+            color: #64748b;
+            font-size: 14px;
+            margin-bottom: 15px;
         }
 
-        /* Botón para regresar al menú */
-        .btn-regresar {
-            margin-top: 25px;
-            padding: 12px 25px;
-            font-size: 16px;
-            cursor: pointer;
-            background-color: #555;
-            color: white;
+        .modal-botones {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .btn-opcion {
+            padding: 12px;
             border: none;
-            border-radius: 5px;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            color: white;
         }
 
-        .btn-regresar:hover {
-            background-color: #333;
+        .btn-equipo { background-color: #0f172a; }
+        .btn-equipo:hover { background-color: #1e293b; }
+
+        .btn-comensal { background-color: #25d366; }
+        .btn-comensal:hover { background-color: #1fa855; }
+
+        .btn-cancelar-modal {
+            background: #dc3545;
+            border: none;
+            color: white;
+            font-size: 14px;
+            padding: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        /* ===== MODO OSCURO ===== */
+        body.dark-mode {
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+
+        body.dark-mode .contenedor-vistas {
+            background-color: #1e293b;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+        }
+
+        body.dark-mode .contenedor-vistas label {
+            color: #f8fafc;
+        }
+
+        body.dark-mode .contenedor-vistas select {
+            background-color: #334155;
+            color: #f8fafc;
+            border-color: #475569;
+        }
+
+        body.dark-mode .btn-toggle-dark {
+            background-color: #f8fafc;
+            color: #0f172a;
+        }
+
+        body.dark-mode .btn-toggle-dark:hover {
+            background-color: #e2e8f0;
+        }
+
+        body.dark-mode .contenedor-tabla {
+            background-color: #1e293b;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        }
+
+        body.dark-mode table {
+            background-color: #1e293b;
+        }
+
+        body.dark-mode th, 
+        body.dark-mode td {
+            background-color: #1e293b;
+            color: #f8fafc;
+            border-right-color: #334155;
+            border-bottom-color: #334155;
+        }
+
+        body.dark-mode th {
+            background-color: #334155;
+            color: #f8fafc;
+            border-top-color: #334155;
+        }
+
+        body.dark-mode thead th:nth-child(1),
+        body.dark-mode thead th:nth-child(2),
+        body.dark-mode thead th:nth-child(3),
+        body.dark-mode thead th:nth-child(4) {
+            background-color: #475569;
+        }
+
+        body.dark-mode td[style*="background-color: rgb(240, 240, 240)"],
+        body.dark-mode td[style*="background-color: #f0f0f0"] {
+            background-color: #334155 !important;
+        }
+
+        select option {
+            background-color: #ffffff;
+            color: #333333;
+        }
+
+        body.dark-mode select option {
+            background-color: #1e293b !important;
+            color: #f8fafc !important;
+        }
+
+        body.dark-mode input[type="date"], 
+        body.dark-mode input[type="time"], 
+        body.dark-mode select.celda-select {
+            color-scheme: dark;
+            color: #f8fafc;
+        }
+
+        body.dark-mode input[type="date"]::-webkit-calendar-picker-indicator,
+        body.dark-mode input[type="time"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+        }
+
+        body.dark-mode td[contenteditable="true"]:focus {
+            outline: 2px solid #38bdf8;
+            background-color: #0f172a;
+        }
+
+        body.dark-mode .menu-excel {
+            background-color: #1e293b;
+            border-color: #475569;
+            color: #f8fafc;
+        }
+
+        body.dark-mode .menu-excel input[type="text"],
+        body.dark-mode .menu-excel input[type="search"] {
+            background-color: #0f172a;
+            color: #f8fafc;
+            border: 1px solid #475569;
+        }
+
+        body.dark-mode .menu-excel input[type="text"]::placeholder,
+        body.dark-mode .menu-excel input[type="search"]::placeholder {
+            color: #94a3b8;
+        }
+
+        body.dark-mode .menu-excel div.opcion-orden:hover {
+            background-color: #334155;
+        }
+
+        body.dark-mode .lista-checkboxes {
+            background-color: #0f172a;
+            border-color: #475569;
+        }
+
+        body.dark-mode .modal-box {
+            background-color: #1e293b;
+        }
+
+        body.dark-mode .modal-box h3 {
+            color: #f8fafc;
+        }
+
+        body.dark-mode .modal-box p {
+            color: #cbd5e1;
         }
     </style>
 </head>
 <body>
 
-    <h1>Reservaciones Previas</h1>
+    <span id="nombreUsuarioTitulo" style="display: none;"></span>
 
-    <table>
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>Nombre del Cliente</th>
-                <th>Fecha</th>
-                <th>Hora</th>
-                <th>Personas</th>
-            </tr>
-        </thead>
-        <tbody id="cuerpoTabla">
-            <!-- Ejemplo de filas estáticas -->
-            <tr>
-                <td>1</td>
-                <td>Perla Domínguez</td>
-                <td>2026-09-01</td>
-                <td>20:00</td>
-                <td>4</td>
-            </tr>
-            <tr>
-                <td>2</td>
-                <td>Carlos Ruiz</td>
-                <td>2026-09-02</td>
-                <td>21:30</td>
-                <td>2</td>
-            </tr>
-        </tbody>
-    </table>
+    <div class="contenedor-vistas">
+        <label for="selectorVista">Vista de tabla:</label>
+        <select id="selectorVista" onchange="cambiarVista(this.value)">
+            <option value="nueva_reservacion" selected>Nueva reservación</option>
+            <option value="meseros">Meseros</option>
+            <option value="anticipos">Anticipos</option>
+            <option value="general">General</option>
+            <option value="copia_seguridad">Copia de seguridad</option>
+        </select>
+        
+        <button id="btnModoOscuro" class="btn-toggle-dark" onclick="toggleModoOscuro()">🌙 Modo Oscuro</button>
+    </div>
 
-    <button type="button" class="btn-regresar" onclick="regresar()">Volver al menú</button>
+    <div class="contenedor-tabla">
+        <table id="tablaReservas">
+            <thead>
+                <tr id="encabezadosTabla"></tr>
+            </thead>
+            <tbody id="cuerpoTabla"></tbody>
+        </table>
+
+        <div id="menuExcel" class="menu-excel">
+            <div class="opcion-orden" onclick="ordenarColumna('ASC')">
+                <span>▲</span> Ordenar de menor a mayor
+            </div>
+            <div class="opcion-orden" onclick="ordenarColumna('DESC')">
+                <span>▼</span> Ordenar de mayor a menor
+            </div>
+            <hr style="margin: 8px 0; border: 0; border-top: 1px solid #eee;">
+            <div style="font-weight: bold; font-size: 11px; color: #888; margin-top: 4px;">SELECCIONAR VALORES:</div>
+            
+            <div class="lista-checkboxes" id="contenedorCheckboxes"></div>
+
+            <div class="acciones-menu">
+                <button type="button" class="btn-guardar" onclick="aplicarFiltrosExcel()">Aplicar</button>
+                <button type="button" class="btn-regresar" onclick="cerrarMenu()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="acciones">
+        <button type="button" class="btn-agregar" id="btnAgregarFila" onclick="agregarFila()">+ Agregar Fila</button>
+        <button type="button" class="btn-eliminar" id="btnEliminarFilas" onclick="eliminarFilasSeleccionadas()">Eliminar Filas</button>
+        <button type="button" class="btn-wa" id="btnEnviarWA" onclick="preguntarDestinatarioWA()">📲 Enviar por WhatsApp</button>
+        <button type="button" class="btn-export-excel" id="btnExportExcel" onclick="exportarExcel()">💾 Exportar a Excel</button>
+        <button type="button" class="btn-export-pdf" id="btnExportPDF" onclick="exportarPDF()">📄 Exportar a PDF</button>
+        <button type="button" class="btn-backup" id="btnBackup" onclick="descargarRespaldoJSON()">📥 Respaldar (JSON)</button>
+        
+        <!-- Input de archivo oculto y botón para restaurar -->
+        <input type="file" id="inputRestaurarJSON" accept=".json" style="display: none;" onchange="procesarRestauracionJSON(event)">
+        <button type="button" class="btn-restore" id="btnRestore" onclick="document.getElementById('inputRestaurarJSON').click()">📤 Restaurar (JSON)</button>
+        
+        <button type="button" class="btn-guardar" id="btnGuardarCambios" onclick="guardarTabla(true)">Guardar Cambios</button>
+        <button type="button" class="btn-limpiar" id="btnLimpiarFiltros" onclick="limpiarFiltros()">Quitar Filtros</button>
+        <button type="button" class="btn-regresar" id="btnVolverMenu" onclick="regresar()">Volver al menú</button>
+    </div>
+
+    <div id="tarjetaVistaPrevia"></div>
+
+    <div id="modalDestinatario" class="modal-overlay">
+        <div class="modal-box">
+            <h3>¿Para quién es la imagen?</h3>
+            <hr style="margin: 15px 0;">
+            <div class="modal-botones">
+                <button type="button" class="btn-opcion btn-equipo" onclick="seleccionarOpcionWA('equipo')">👥 Equipo de trabajo</button>
+                <button type="button" class="btn-opcion btn-comensal" onclick="seleccionarOpcionWA('comensal')">🍽️ Comensal</button>
+                <button type="button" class="btn-cancelar-modal" onclick="cerrarModalDestinatario()">Cancelar</button>
+            </div>
+        </div>
+    </div>
 
     <script>
-    function regresar() {
-        window.location.href = "html2.html";
+    const firebaseConfig = {
+        apiKey: "AIzaSyCI5yWdLu1Z3XJ-94KwU3qaEU3vCA5sZOQ",
+        authDomain: "reservaciones-quijote.firebaseapp.com",
+        databaseURL: "https://reservaciones-quijote-default-rtdb.firebaseio.com",
+        projectId: "reservaciones-quijote",
+        storageBucket: "reservaciones-quijote.firebasestorage.app",
+        messagingSenderId: "455456029270",
+        appId: "1:455456029270:web:f2b28b6c1ac5bb4a4f59f7",
+        measurementId: "G-B0BMD25W5N"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    var columnas = [
+        "", "", "Nombre", "Apellido", "Fecha", "Día", "Hora", 
+        "Menú", "#phone", "#p", "Área", "Status", 
+        "Cantidad Anticipo", "Vía Anticipo", 
+        "Comentarios para Cocina", "Comentarios para Meseros", "Comentarios para Barra",
+        "Responsable", "Pin", "Alta Traspasos", "Retorno de anticipo"
+    ];
+
+    var columnaActual = null;
+    var filtrosSeleccionados = {};
+    var sortableInstance = null;
+
+    function toggleModoOscuro() {
+        document.body.classList.toggle("dark-mode");
+        var esOscuro = document.body.classList.contains("dark-mode");
+        localStorage.setItem("modoOscuro", esOscuro ? "activado" : "desactivado");
+        actualizarTextoBotonTema(esOscuro);
+
+        var selectsStatus = document.querySelectorAll("select.status-select");
+        selectsStatus.forEach(function(select) {
+            cambiarColor(select);
+        });
     }
+
+    function actualizarTextoBotonTema(esOscuro) {
+        var btn = document.getElementById("btnModoOscuro");
+        if (btn) {
+            btn.innerText = esOscuro ? "☀️ Modo Claro" : "🌙 Modo Oscuro";
+        }
+    }
+
+    function cargarPreferenciasTema() {
+        var estadoTema = localStorage.getItem("modoOscuro");
+        if (estadoTema === "activado") {
+            document.body.classList.add("dark-mode");
+            actualizarTextoBotonTema(true);
+        }
+    }
+
+    function obtenerUsuarioActual() {
+        var urlParams = new URLSearchParams(window.location.search);
+        var usuarioUrl = urlParams.get('user') || urlParams.get('usuario');
+        
+        if (usuarioUrl) {
+            localStorage.setItem("usuarioActual", usuarioUrl);
+            return usuarioUrl;
+        }
+
+        var usuarioStorage = localStorage.getItem("usuarioActual");
+        if (usuarioStorage) {
+            return usuarioStorage;
+        }
+
+        var path = window.location.pathname.toLowerCase();
+        if (path.includes("quijote")) return "quijote";
+        if (path.includes("perla")) return "perla";
+        if (path.includes("mesero")) return "mesero";
+
+        window.location.href = "index.html";
+        return null;
+    }
+
+    function esUsuarioMesero() {
+        var usuario = (obtenerUsuarioActual() || "").toLowerCase();
+        return usuario.includes("mesero");
+    }
+
+    function obtenerClaveUsuario() {
+        var usuarioActivo = obtenerUsuarioActual();
+        return usuarioActivo ? "tablaReservasDatos_" + usuarioActivo : null;
+    }
+
+    function inicializarDragAndDrop() {
+        var el = document.getElementById('cuerpoTabla');
+        if (!el) return;
+
+        sortableInstance = new Sortable(el, {
+            handle: '.drag-handle',
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            onEnd: function () {
+                guardarTabla();
+            }
+        });
+    }
+
+    window.onload = function() {
+        cargarPreferenciasTema();
+        
+        var usuarioActivo = obtenerUsuarioActual();
+        if (!usuarioActivo) return;
+
+        var elTitulo = document.getElementById("nombreUsuarioTitulo");
+        if (elTitulo) elTitulo.textContent = usuarioActivo;
+
+        evaluarPermisosBotones();
+
+        generarEncabezados();
+        inicializarDragAndDrop();
+        
+        var claveStorage = obtenerClaveUsuario();
+        if (claveStorage) {
+            db.ref(claveStorage).on('value', function(snapshot) {
+                var reservas = snapshot.val();
+                if (reservas) {
+                    renderizarTabla(reservas);
+                } else {
+                    var datosLocales = JSON.parse(localStorage.getItem(claveStorage)) || [];
+                    renderizarTabla(datosLocales);
+                }
+                var vistaActual = document.getElementById("selectorVista").value;
+                cambiarVista(vistaActual);
+            });
+        }
+
+        document.addEventListener("click", function(e) {
+            var menu = document.getElementById("menuExcel");
+            if (menu.style.display === "block" && !menu.contains(e.target) && !e.target.classList.contains("btn-filtro")) {
+                cerrarMenu();
+            }
+        });
+    };
+
+    function evaluarPermisosBotones() {
+        var btnEliminar = document.getElementById("btnEliminarFilas");
+        var btnWA = document.getElementById("btnEnviarWA");
+        var btnAgregar = document.getElementById("btnAgregarFila");
+        var btnGuardar = document.getElementById("btnGuardarCambios");
+        var btnExportExcel = document.getElementById("btnExportExcel");
+        var btnExportPDF = document.getElementById("btnExportPDF");
+        var btnBackup = document.getElementById("btnBackup");
+        var btnRestore = document.getElementById("btnRestore");
+        var btnLimpiarFiltros = document.getElementById("btnLimpiarFiltros");
+        var btnVolverMenu = document.getElementById("btnVolverMenu");
+
+        var vistaActual = (document.getElementById("selectorVista") ? document.getElementById("selectorVista").value : "").toLowerCase();
+
+        // Control de los botones Respaldar y Restaurar (Sólo en 'copia_seguridad')
+        if (vistaActual === "copia_seguridad") {
+            btnBackup.style.display = "inline-block";
+            btnRestore.style.display = "inline-block";
+        } else {
+            btnBackup.style.display = "none";
+            btnRestore.style.display = "none";
+        }
+
+        // Control de los botones Exportar a Excel y Exportar a PDF (Sólo en 'general')
+        if (vistaActual === "general") {
+            btnExportExcel.style.display = "inline-block";
+            btnExportPDF.style.display = "inline-block";
+        } else {
+            btnExportExcel.style.display = "none";
+            btnExportPDF.style.display = "none";
+        }
+
+        // Si la vista es copia_seguridad, ocultamos el resto de los botones operativos
+        if (vistaActual === "copia_seguridad") {
+            btnAgregar.style.display = "none";
+            btnEliminar.style.display = "none";
+            btnWA.style.display = "none";
+            btnGuardar.style.display = "none";
+            btnLimpiarFiltros.style.display = "none";
+            btnVolverMenu.style.display = "none";
+            return;
+        }
+
+        // Resto de visibilidades comunes
+        btnLimpiarFiltros.style.display = "inline-block";
+        btnVolverMenu.style.display = "inline-block";
+        
+        if (esUsuarioMesero() || vistaActual === "nueva_reservacion" || vistaActual === "anticipos" || vistaActual === "meseros") {
+            btnEliminar.style.display = "none";
+        } else {
+            btnEliminar.style.display = "inline-block";
+        }
+
+        if (esUsuarioMesero() || vistaActual === "nueva_reservacion" || vistaActual === "meseros") {
+            btnWA.style.display = "none";
+        } else {
+            btnWA.style.display = "inline-block";
+        }
+
+        if (vistaActual === "anticipos" || vistaActual === "meseros") {
+            btnAgregar.style.display = "none";
+        } else {
+            btnAgregar.style.display = "inline-block";
+        }
+
+        if (vistaActual === "meseros") {
+            btnGuardar.style.display = "none";
+        } else {
+            btnGuardar.style.display = "inline-block";
+        }
+    }
+
+    function cambiarVista(vista) {
+        var tabla = document.getElementById("tablaReservas");
+        var filas = tabla.rows;
+
+        var ocultarPorVista = {
+            "general": [],
+            "copia_seguridad": [],
+            "nueva_reservacion": [19, 20],
+            "anticipos": [7, 14, 15, 16],
+            "meseros": [8, 20]
+        };
+
+        var columnasAOcultar = ocultarPorVista[vista] || [];
+
+        for (var i = 0; i < filas.length; i++) {
+            var celdas = filas[i].children;
+            for (var j = 0; j < celdas.length; j++) {
+                if (columnasAOcultar.includes(j)) {
+                    celdas[j].classList.add("columna-oculta");
+                } else {
+                    celdas[j].classList.remove("columna-oculta");
+                }
+            }
+        }
+
+        var esModoLectura = (vista === "meseros" || vista === "copia_seguridad");
+
+        if (sortableInstance) {
+            sortableInstance.option("disabled", esModoLectura || esUsuarioMesero());
+        }
+
+        var tbody = document.getElementById("cuerpoTabla");
+        for (var i = 0; i < tbody.rows.length; i++) {
+            var fila = tbody.rows[i];
+            for (var j = 2; j < fila.cells.length; j++) {
+                var celda = fila.cells[j];
+                
+                if (celda.hasAttribute("contenteditable")) {
+                    celda.contentEditable = esModoLectura ? "false" : "true";
+                }
+
+                var elementosInput = celda.querySelectorAll("input, select");
+                elementosInput.forEach(function(el) {
+                    el.disabled = esModoLectura;
+                });
+            }
+        }
+
+        evaluarPermisosBotones();
+    }
+
+    function capitalizarPrimerLetra(texto) {
+        if (!texto) return "";
+        return texto.charAt(0).toUpperCase() + texto.slice(1);
+    }
+
+    function formatearDineroSinDecimales(valor) {
+        if (!valor) return "";
+        var numeroLimpio = valor.toString().replace(/[^0-9]/g, '');
+        if (numeroLimpio === "") return "";
+        
+        var numero = parseInt(numeroLimpio, 10);
+        return "$ " + numero.toLocaleString('es-MX');
+    }
+
+    function generarPINUnico() {
+        var tbody = document.getElementById("cuerpoTabla");
+        var pinesExistentes = new Set();
+
+        if (tbody) {
+            for (var i = 0; i < tbody.rows.length; i++) {
+                var celdaPin = tbody.rows[i].cells[18];
+                if (celdaPin) {
+                    var valPin = celdaPin.innerText.trim();
+                    if (valPin) pinesExistentes.add(valPin);
+                }
+            }
+        }
+
+        var nuevoPin = "";
+        do {
+            nuevoPin = Math.floor(1000 + Math.random() * 9000).toString();
+        } while (pinesExistentes.has(nuevoPin));
+
+        return nuevoPin;
+    }
+
+    function generarEncabezados() {
+        var tr = document.getElementById("encabezadosTabla");
+        tr.innerHTML = "";
+        columnas.forEach(function(col, idx) {
+            var th = document.createElement("th");
+            
+            if (idx === 0) {
+                th.innerText = "";
+                th.style.width = "25px";
+            } else if (idx === 1) {
+                th.innerHTML = '<input type="checkbox" onchange="marcarTodasLasFilas(this)">';
+                th.style.textAlign = "center";
+            } else {
+                var div = document.createElement("div");
+                div.className = "th-header";
+                
+                var span = document.createElement("span");
+                span.innerText = col;
+
+                var btn = document.createElement("button");
+                btn.className = "btn-filtro";
+                btn.innerText = "▼";
+                btn.onclick = function(e) { abrirMenuExcel(e, idx); };
+
+                div.appendChild(span);
+                div.appendChild(btn);
+                th.appendChild(div);
+            }
+            tr.appendChild(th);
+        });
+    }
+
+    function renderizarTabla(reservas) {
+        var tbody = document.getElementById("cuerpoTabla");
+        tbody.innerHTML = "";
+
+        reservas.forEach(function(filaData) {
+            crearFilaHTML(filaData);
+        });
+    }
+
+    function cambiarViaAnticipo(select) {
+        var fila = select.parentElement.parentElement;
+        var celdaCantidad = fila.cells[12];
+        var viaVal = select.value;
+
+        if (viaVal === "Diferido") {
+            var valorActual = obtenerValorCelda(celdaCantidad, 12);
+            var parte1 = "";
+            var parte2 = "";
+
+            if (valorActual.includes(" / ")) {
+                var partes = valorActual.split(" / ");
+                parte1 = partes[0] || "";
+                parte2 = partes[1] || "";
+            } else {
+                parte1 = valorActual;
+            }
+
+            celdaCantidad.removeAttribute("contenteditable");
+            celdaCantidad.innerHTML = 
+                '<div class="contenedor-diferido">' +
+                    '<input type="text" class="subinput-diferido" placeholder="Anticipo 1" value="' + parte1 + '" onblur="formatearSubinputDiferido(this); guardarTabla();">' +
+                    '<input type="text" class="subinput-diferido" placeholder="Anticipo 2" value="' + parte2 + '" onblur="formatearSubinputDiferido(this); guardarTabla();">' +
+                '</div>';
+        } else {
+            var valorConcatenado = obtenerValorCelda(celdaCantidad, 12);
+            var valorFinal = valorConcatenado;
+            if (valorConcatenado.includes(" / ")) {
+                valorFinal = valorConcatenado.split(" / ")[0];
+            }
+
+            celdaCantidad.contentEditable = "true";
+            celdaCantidad.innerText = formatearDineroSinDecimales(valorFinal);
+            celdaCantidad.onblur = function() {
+                this.innerText = formatearDineroSinDecimales(this.innerText);
+                guardarTabla();
+            };
+        }
+        guardarTabla();
+    }
+
+    function formatearSubinputDiferido(input) {
+        if (input.value) {
+            input.value = formatearDineroSinDecimales(input.value);
+        }
+    }
+
+    function crearFilaHTML(datos) {
+        var tbody = document.getElementById("cuerpoTabla");
+        var nuevaFila = tbody.insertRow();
+
+        var celdaDrag = nuevaFila.insertCell(0);
+        celdaDrag.innerHTML = '<div class="drag-handle">::</div>';
+        celdaDrag.style.textAlign = "center";
+
+        var celdaCheck = nuevaFila.insertCell(1);
+        celdaCheck.innerHTML = '<input type="checkbox" class="chk-fila">';
+        celdaCheck.style.textAlign = "center";
+
+        var viaAnticipoInicial = datos ? (datos[11] || "") : ""; // Posición 13 - 2 = 11
+
+        for (var i = 2; i < 21; i++) {
+            var celda = nuevaFila.insertCell(i);
+            var valor = datos ? datos[i - 2] : "";
+
+            if (i === 4) {
+                celda.innerHTML = '<input type="date" value="' + valor + '" oninput="actualizarDia(this);" onblur="validarYReordenar(this);">';
+            } else if (i === 5) {
+                celda.innerText = capitalizarPrimerLetra(valor);
+                celda.style.backgroundColor = "#f0f0f0";
+            } else if (i === 6) {
+                celda.innerHTML = '<input type="time" value="' + valor + '" oninput="actualizarMenu(this);" onblur="validarYReordenar(this);">';
+            } else if (i === 7) {
+                celda.innerText = valor;
+                celda.style.backgroundColor = "#f0f0f0";
+            } else if (i === 10) {
+                var areaVal = valor || "";
+                celda.innerHTML = 
+                    '<select class="celda-select" onchange="guardarTabla();">' +
+                        '<option value=""' + (areaVal === '' ? ' selected' : '') + '></option>' +
+                        '<option value="Salón"' + (areaVal === 'Salón' ? ' selected' : '') + '>Salón</option>' +
+                        '<option value="P. Grande"' + (areaVal === 'P. Grande' ? ' selected' : '') + '>P. Grande</option>' +
+                        '<option value="P. Chico 1"' + (areaVal === 'P. Chico 1' ? ' selected' : '') + '>P. Chico 1</option>' +
+                        '<option value="P. Chico 2"' + (areaVal === 'P. Chico 2' ? ' selected' : '') + '>P. Chico 2</option>' +
+                        '<option value="Terraza"' + (areaVal === 'Terraza' ? ' selected' : '') + '>Terraza</option>' +
+                    '</select>';
+            } else if (i === 11) {
+                var statusVal = valor || "";
+                var estiloStatus = obtenerColorStatus(statusVal);
+                celda.style.backgroundColor = estiloStatus.bg;
+                celda.innerHTML = 
+                    '<select class="status-select" style="color:' + estiloStatus.color + ';" onchange="cambiarColor(this); guardarTabla();">' +
+                    '<option value=""' + (statusVal === '' ? ' selected' : '') + '></option>' +
+                    '<option value="Pendiente"' + (statusVal === 'Pendiente' ? ' selected' : '') + '>Pendiente</option>' +
+                    '<option value="Confirmado"' + (statusVal === 'Confirmado' ? ' selected' : '') + '>Confirmado</option>' +
+                    '<option value="Cancelado"' + (statusVal === 'Cancelado' ? ' selected' : '') + '>Cancelado</option>' +
+                    '<option value="Terminado"' + (statusVal === 'Terminado' ? ' selected' : '') + '>Terminado</option>' +
+                '</select>';
+            } else if (i === 12) {
+                if (viaAnticipoInicial === "Diferido") {
+                    var parte1 = "";
+                    var parte2 = "";
+                    if (valor.includes(" / ")) {
+                        var partes = valor.split(" / ");
+                        parte1 = partes[0] || "";
+                        parte2 = partes[1] || "";
+                    } else {
+                        parte1 = valor;
+                    }
+
+                    celda.innerHTML = 
+                        '<div class="contenedor-diferido">' +
+                            '<input type="text" class="subinput-diferido" placeholder="Anticipo 1" value="' + parte1 + '" onblur="formatearSubinputDiferido(this); guardarTabla();">' +
+                            '<input type="text" class="subinput-diferido" placeholder="Anticipo 2" value="' + parte2 + '" onblur="formatearSubinputDiferido(this); guardarTabla();">' +
+                        '</div>';
+                } else {
+                    celda.contentEditable = "true";
+                    celda.innerText = formatearDineroSinDecimales(valor);
+                    celda.onblur = function() {
+                        this.innerText = formatearDineroSinDecimales(this.innerText);
+                        guardarTabla();
+                    };
+                }
+            } else if (i === 13) {
+                var viaVal = valor || "";
+                celda.innerHTML = 
+                    '<select class="celda-select" onchange="cambiarViaAnticipo(this);">' +
+                        '<option value=""' + (viaVal === '' ? ' selected' : '') + '></option>' +
+                        '<option value="Efectivo"' + (viaVal === 'Efectivo' ? ' selected' : '') + '>Efectivo</option>' +
+                        '<option value="Tarjeta"' + (viaVal === 'Tarjeta' ? ' selected' : '') + '>Tarjeta</option>' +
+                        '<option value="Transferencia"' + (viaVal === 'Transferencia' ? ' selected' : '') + '>Transferencia</option>' +
+                        '<option value="No requerido"' + (viaVal === 'No requerido' ? ' selected' : '') + '>No requerido</option>' +
+                        '<option value="Diferido"' + (viaVal === 'Diferido' ? ' selected' : '') + '>Diferido</option>' +
+                    '</select>';
+            } else if (i === 18) {
+                var pinVal = valor || generarPINUnico();
+                celda.innerText = pinVal;
+                celda.style.backgroundColor = "#f0f0f0";
+            } else if (i === 19) {
+                var altaVal = valor || "";
+                celda.innerHTML = 
+                    '<select class="celda-select" onchange="guardarTabla();">' +
+                        '<option value=""' + (altaVal === '' ? ' selected' : '') + '></option>' +
+                        '<option value="Pendiente"' + (altaVal === 'Pendiente' ? ' selected' : '') + '>Pendiente</option>' +
+                        '<option value="Realizado"' + (altaVal === 'Realizado' ? ' selected' : '') + '>Realizado</option>' +
+                        '<option value="No requerido"' + (altaVal === 'No requerido' ? ' selected' : '') + '>No requerido</option>' +
+                    '</select>';
+            } else if (i === 20) {
+                var retornoVal = valor || "";
+                celda.innerHTML = 
+                    '<select class="celda-select" onchange="guardarTabla();">' +
+                        '<option value=""' + (retornoVal === '' ? ' selected' : '') + '></option>' +
+                        '<option value="Pendiente"' + (retornoVal === 'Pendiente' ? ' selected' : '') + '>Pendiente</option>' +
+                        '<option value="Realizado"' + (retornoVal === 'Realizado' ? ' selected' : '') + '>Realizado</option>' +
+                        '<option value="No requerido"' + (retornoVal === 'No requerido' ? ' selected' : '') + '>No requerido</option>' +
+                    '</select>';
+            } else if (i === 14 || i === 15 || i === 16) {
+                celda.contentEditable = "true";
+                celda.innerText = valor || "";
+                celda.onblur = function() { guardarTabla(); };
+            } else {
+                celda.contentEditable = "true";
+                celda.innerText = valor || "";
+                celda.onblur = function() { guardarTabla(); };
+            }
+        }
+    }
+
+    function validarYReordenar(input) {
+        if (input.type === "date" && input.value) {
+            var partes = input.value.split("-");
+            if (!partes[0] || partes[0].length < 4 || parseInt(partes[0], 10) < 1000) {
+                return;
+            }
+        }
+        reordenarPorFechaYHora();
+        guardarTabla();
+    }
+
+    function reordenarPorFechaYHora() {
+        var tbody = document.getElementById("cuerpoTabla");
+        var filas = Array.from(tbody.rows);
+
+        filas.sort(function(a, b) {
+            var fechaA = obtenerValorCelda(a.cells[4], 4) || "9999-99-99";
+            var fechaB = obtenerValorCelda(b.cells[4], 4) || "9999-99-99";
+
+            if (fechaA < fechaB) return -1;
+            if (fechaA > fechaB) return 1;
+
+            var horaA = obtenerValorCelda(a.cells[6], 6) || "99:99";
+            var horaB = obtenerValorCelda(b.cells[6], 6) || "99:99";
+
+            if (horaA < horaB) return -1;
+            if (horaA > horaB) return 1;
+
+            return 0;
+        });
+
+        filas.forEach(function(fila) { tbody.appendChild(fila); });
+    }
+
+    function formatearHora12h(hora24) {
+        if (!hora24) return "-";
+        var partes = hora24.split(":");
+        if (partes.length < 2) return hora24;
+
+        var horas = parseInt(partes[0], 10);
+        var minutos = partes[1];
+        var ampm = horas >= 12 ? "PM" : "AM";
+
+        horas = horas % 12;
+        horas = horas ? horas : 12;
+        var horasStr = horas < 10 ? "0" + horas : horas;
+
+        return horasStr + ":" + minutos + " " + ampm;
+    }
+
+    function obtenerFechaFormateada(fechaIso) {
+        if (!fechaIso) return "-";
+        var partes = fechaIso.split("-");
+        if (partes.length < 3) return fechaIso;
+
+        var fechaObj = new Date(partes[0], partes[1] - 1, partes[2]);
+        var diasSemana = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+        var meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+
+        var diaSemana = diasSemana[fechaObj.getDay()];
+        var diaNumero = fechaObj.getDate();
+        var mesNombre = meses[fechaObj.getMonth()];
+
+        return diaSemana + " " + diaNumero + " de " + mesNombre;
+    }
+
+    function preguntarDestinatarioWA() {
+        var vistaActual = (document.getElementById("selectorVista") ? document.getElementById("selectorVista").value : "").toLowerCase();
+        if (esUsuarioMesero() || vistaActual === "nueva_reservacion" || vistaActual === "meseros" || vistaActual === "copia_seguridad") {
+            alert("No tienes permisos autorizados para enviar por WhatsApp.");
+            return;
+        }
+
+        var seleccionados = document.querySelectorAll(".chk-fila:checked");
+        if (seleccionados.length === 0) {
+            alert("Por favor, selecciona al menos una reservación para generar la tarjeta.");
+            return;
+        }
+
+        document.getElementById("modalDestinatario").style.display = "flex";
+    }
+
+    function seleccionarOpcionWA(tipo) {
+        cerrarModalDestinatario();
+        generarImagenWhatsApp(tipo);
+    }
+
+    function cerrarModalDestinatario() {
+        document.getElementById("modalDestinatario").style.display = "none";
+    }
+
+    async function generarImagenWhatsApp(tipoDestinatario) {
+        var seleccionados = Array.from(document.querySelectorAll(".chk-fila:checked"));
+
+        var contenedorTarjeta = document.getElementById("tarjetaVistaPrevia");
+        contenedorTarjeta.innerHTML = ""; 
+
+        var primerTelefono = "";
+
+        seleccionados.forEach(function(chk, index) {
+            var fila = chk.parentElement.parentElement;
+
+            var nombre = obtenerValorCelda(fila.cells[2], 2);
+            var apellido = obtenerValorCelda(fila.cells[3], 3);
+            var fechaIso = obtenerValorCelda(fila.cells[4], 4);
+            var diaFormateado = obtenerFechaFormateada(fechaIso);
+            var horaBruta = obtenerValorCelda(fila.cells[6], 6);
+            var hora = formatearHora12h(horaBruta);
+            var menu = obtenerValorCelda(fila.cells[7], 7);
+            var phone = obtenerValorCelda(fila.cells[8], 8).replace(/\D/g, '');
+            var personas = obtenerValorCelda(fila.cells[9], 9);
+            var area = obtenerValorCelda(fila.cells[10], 10);
+            var status = obtenerValorCelda(fila.cells[11], 11);
+            var cantAnticipo = obtenerValorCelda(fila.cells[12], 12);
+            var viaAnticipo = obtenerValorCelda(fila.cells[13], 13);
+            var comCocina = obtenerValorCelda(fila.cells[14], 14);
+            var comMeseros = obtenerValorCelda(fila.cells[15], 15);
+            var comBarra = obtenerValorCelda(fila.cells[16], 16);
+            var pin = obtenerValorCelda(fila.cells[18], 18);
+
+            if (index === 0 && phone) {
+                primerTelefono = phone;
+            }
+
+            var areaFormateada = area ? area.replace(/^P\.\s*/, "Privado ") : "-";
+
+            var etiquetaUltimoCampo = "Estado:";
+            var valorUltimoCampo = status || "-";
+
+            var tieneAnticipo = cantAnticipo && cantAnticipo.trim() !== "";
+
+            if (tipoDestinatario === "comensal") {
+                etiquetaUltimoCampo = "Anticipo:";
+                if (tieneAnticipo) {
+                    valorUltimoCampo = cantAnticipo + (viaAnticipo ? " (" + viaAnticipo + ")" : "");
+                } else {
+                    valorUltimoCampo = "Pendiente";
+                }
+            }
+
+            var htmlNotasEquipo = '';
+            if (tipoDestinatario === "equipo") {
+                if (comCocina && comCocina.trim() !== "") {
+                    htmlNotasEquipo += '<div class="item-tarjeta"><span class="etiqueta">Cocina:</span><span class="valor">' + comCocina + '</span></div>';
+                }
+                if (comMeseros && comMeseros.trim() !== "") {
+                    htmlNotasEquipo += '<div class="item-tarjeta"><span class="etiqueta">Meseros:</span><span class="valor">' + comMeseros + '</span></div>';
+                }
+                if (comBarra && comBarra.trim() !== "") {
+                    htmlNotasEquipo += '<div class="item-tarjeta"><span class="etiqueta">Barra:</span><span class="valor">' + comBarra + '</span></div>';
+                }
+            }
+
+            var htmlComensalPin = '';
+            if (tipoDestinatario === "comensal" && tieneAnticipo) {
+                htmlComensalPin = 
+                    '<div class="item-tarjeta"><span class="etiqueta">PIN:</span><span class="valor">' + (pin || "-") + '</span></div>' +
+                    '<div style="text-align: center; margin-top: 14px; font-size: 15px; color: #F2EBDD; font-style: italic;">' +
+                        'Pin de seguridad. No compartir.' +
+                    '</div>';
+            }
+
+            var bloque = document.createElement("div");
+            bloque.className = "bloque-tarjeta";
+            bloque.innerHTML = 
+                '<h2>Detalle de Reservación #' + (index + 1) + '</h2>' +
+                '<div class="item-tarjeta"><span class="etiqueta">Cliente:</span><span class="valor">' + nombre + ' ' + apellido + '</span></div>' +
+                '<div class="item-tarjeta"><span class="etiqueta">Número de personas:</span><span class="valor">' + (personas || "1") + '</span></div>' +
+                '<div class="item-tarjeta"><span class="etiqueta">Día:</span><span class="valor">' + diaFormateado + '</span></div>' +
+                '<div class="item-tarjeta"><span class="etiqueta">Hora:</span><span class="valor">' + hora + '</span></div>' +
+                '<div class="item-tarjeta"><span class="etiqueta">Menú:</span><span class="valor">' + (menu || "-") + '</span></div>' +
+                '<div class="item-tarjeta"><span class="etiqueta">Área:</span><span class="valor">' + areaFormateada + '</span></div>' +
+                '<div class="item-tarjeta"><span class="etiqueta">' + etiquetaUltimoCampo + '</span><span class="valor">' + valorUltimoCampo + '</span></div>' +
+                htmlNotasEquipo +
+                htmlComensalPin;
+
+            contenedorTarjeta.appendChild(bloque);
+        });
+
+        if (primerTelefono.length === 10) {
+            primerTelefono = "52" + primerTelefono;
+        }
+
+        const canvas = await html2canvas(contenedorTarjeta);
+
+        var adjuntos = [];
+        var chkDesayuno = document.getElementById('chkDesayuno');
+        var chkComida = document.getElementById('chkComida');
+        var chkInbursa = document.getElementById('chkInbursa');
+
+        if (chkDesayuno && chkDesayuno.checked) {
+            adjuntos.push("📄 Menú Desayunos: " + chkDesayuno.value);
+        }
+        if (chkComida && chkComida.checked) {
+            adjuntos.push("📄 Menú Comida/Cena: " + chkComida.value);
+        }
+        if (chkInbursa && chkInbursa.checked) {
+            adjuntos.push("💳 Datos de Transferencia: " + chkInbursa.value);
+        }
+
+        var mensaje = "Buen día, adjunto información de su reservación.";
+        if (adjuntos.length > 0) {
+            mensaje += "\n\n*Documentos adjuntos:*\n" + adjuntos.join("\n");
+        }
+
+        canvas.toBlob(async function(blob) {
+            try {
+                await navigator.clipboard.write([
+                    new ClipboardItem({ [blob.type]: blob })
+                ]);
+            } catch (err) {
+                console.log("No se pudo copiar la imagen al portapapeles automáticamente.");
+            }
+
+            var esMovil = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            var urlWA = "";
+
+            if (esMovil) {
+                urlWA = primerTelefono 
+                    ? "whatsapp://send?phone=" + primerTelefono + "&text=" + encodeURIComponent(mensaje)
+                    : "whatsapp://send?text=" + encodeURIComponent(mensaje);
+            } else {
+                urlWA = primerTelefono 
+                    ? "https://api.whatsapp.com/send?phone=" + primerTelefono + "&text=" + encodeURIComponent(mensaje)
+                    : "https://web.whatsapp.com/";
+            }
+
+            window.open(urlWA, "_blank");
+        }, "image/png");
+    }
+
+    // ===== FUNCIONES DE EXPORTACIÓN Y RESPALDO =====
+
+    function obtenerMatrizDatosExportar() {
+        var seleccionados = document.querySelectorAll(".chk-fila:checked");
+        
+        if (seleccionados.length === 0) {
+            alert("Por favor, selecciona al menos una reservación usando la casilla (checkbox) para exportar.");
+            return null;
+        }
+
+        var encabezados = columnas.slice(2);
+        var matriz = [encabezados];
+
+        seleccionados.forEach(function(chk) {
+            var fila = chk.parentElement.parentElement;
+            if (fila.style.display !== "none") {
+                var filaData = [];
+                for (var j = 2; j < 21; j++) {
+                    filaData.push(obtenerValorCelda(fila.cells[j], j));
+                }
+                matriz.push(filaData);
+            }
+        });
+
+        return matriz;
+    }
+
+    function exportarExcel() {
+        var datos = obtenerMatrizDatosExportar();
+        if (!datos || datos.length <= 1) {
+            return;
+        }
+
+        var wb = XLSX.utils.book_new();
+        var ws = XLSX.utils.aoa_to_sheet(datos);
+        XLSX.utils.book_append_sheet(wb, ws, "Reservaciones");
+
+        var usuario = obtenerUsuarioActual() || "Quijote";
+        var fechaStr = new Date().toISOString().slice(0, 10);
+        XLSX.writeFile(wb, "Reservaciones_" + usuario + "_" + fechaStr + ".xlsx");
+    }
+
+    function exportarPDF() {
+        var datos = obtenerMatrizDatosExportar();
+        if (!datos || datos.length <= 1) {
+            return;
+        }
+
+        const { jsPDF } = window.jspdf;
+        var doc = new jsPDF('landscape');
+
+        var usuario = obtenerUsuarioActual() || "Quijote";
+        var fechaStr = new Date().toLocaleDateString('es-MX');
+
+        doc.setFontSize(16);
+        doc.text("Reporte de Reservaciones - " + usuario, 14, 15);
+        doc.setFontSize(10);
+        doc.text("Fecha de generación: " + fechaStr, 14, 22);
+
+        var encabezados = [datos[0]];
+        var filas = datos.slice(1);
+
+        doc.autoTable({
+            head: encabezados,
+            body: filas,
+            startY: 26,
+            styles: { fontSize: 7, cellPadding: 2 },
+            headStyles: { fillColor: [16, 47, 39], textColor: [255, 255, 255] },
+            alternateRowStyles: { fillColor: [245, 245, 245] },
+            theme: 'grid'
+        });
+
+        doc.save("Reservaciones_" + usuario + "_" + fechaStr.replace(/\//g, '-') + ".pdf");
+    }
+
+    function descargarRespaldoJSON() {
+        var claveStorage = obtenerClaveUsuario();
+        if (!claveStorage) return;
+
+        db.ref(claveStorage).once('value').then(function(snapshot) {
+            var data = snapshot.val() || [];
+            var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
+            var downloadAnchor = document.createElement('a');
+            var fechaStr = new Date().toISOString().slice(0, 10);
+
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "Backup_Reservaciones_" + fechaStr + ".json");
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }).catch(function(err) {
+            alert("Error al descargar respaldo: " + err.message);
+        });
+    }
+
+    function procesarRestauracionJSON(event) {
+        var archivo = event.target.files[0];
+        if (!archivo) return;
+
+        var confirmacion = confirm("⚠️ ATENCIÓN: Al restaurar este archivo se reemplazarán los datos actuales por la versión guardada en el respaldo.\n\n¿Deseas continuar?");
+        
+        if (!confirmacion) {
+            event.target.value = "";
+            return;
+        }
+
+        var lector = new FileReader();
+        lector.onload = function(e) {
+            try {
+                var datosRestaurados = JSON.parse(e.target.result);
+
+                if (!Array.isArray(datosRestaurados)) {
+                    alert("El archivo JSON no tiene un formato válido para esta base de datos.");
+                    event.target.value = "";
+                    return;
+                }
+
+                var claveStorage = obtenerClaveUsuario();
+                if (!claveStorage) return;
+
+                localStorage.setItem(claveStorage, JSON.stringify(datosRestaurados));
+
+                db.ref(claveStorage).set(datosRestaurados)
+                    .then(function() {
+                        alert("¡Base de datos restaurada con éxito desde el archivo!");
+                        renderizarTabla(datosRestaurados);
+                        var vistaActual = document.getElementById("selectorVista").value;
+                        cambiarVista(vistaActual);
+                    })
+                    .catch(function(error) {
+                        alert("Error al actualizar la base de datos en la nube: " + error.message);
+                    });
+
+            } catch (err) {
+                alert("Error al leer el archivo JSON: El formato está corrupto o es incorrecto.");
+            }
+            
+            event.target.value = "";
+        };
+
+        lector.readAsText(archivo);
+    }
+
+    function actualizarDia(inputFecha) {
+        var fechaVal = inputFecha.value;
+        var fila = inputFecha.parentElement.parentElement;
+        var celdaDia = fila.cells[5];
+
+        if (!fechaVal) {
+            celdaDia.innerText = "";
+            return;
+        }
+
+        var partes = fechaVal.split("-");
+        var fechaObj = new Date(partes[0], partes[1] - 1, partes[2]);
+        var diasSemana = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+        celdaDia.innerText = diasSemana[fechaObj.getDay()];
+    }
+
+    function actualizarMenu(inputHora) {
+        var horaVal = inputHora.value;
+        var fila = inputHora.parentElement.parentElement;
+        var celdaMenu = fila.cells[7];
+
+        if (!horaVal) {
+            celdaMenu.innerText = "";
+            return;
+        }
+
+        var horaInt = parseInt(horaVal.split(":")[0], 10);
+
+        if (horaInt < 14) {
+            celdaMenu.innerText = "Desayuno";
+        } else {
+            celdaMenu.innerText = "Comida/cena";
+        }
+    }
+
+    function marcarTodasLasFilas(source) {
+        var checkboxes = document.querySelectorAll(".chk-fila");
+        checkboxes.forEach(function(chk) { chk.checked = source.checked; });
+    }
+
+    function eliminarFilasSeleccionadas() {
+        var vistaActual = (document.getElementById("selectorVista") ? document.getElementById("selectorVista").value : "").toLowerCase();
+        
+        if (esUsuarioMesero() || vistaActual === "nueva_reservacion" || vistaActual === "anticipos" || vistaActual === "meseros" || vistaActual === "copia_seguridad") {
+            alert("No tienes permisos autorizados para eliminar filas.");
+            return;
+        }
+
+        var checkboxes = document.querySelectorAll(".chk-fila:checked");
+
+        if (checkboxes.length === 0) {
+            alert("Por favor, selecciona al menos una fila marcando la casilla de la izquierda.");
+            return;
+        }
+
+        var confirmacion = confirm("¿Seguro que desea eliminar las filas seleccionadas?");
+        if (confirmacion) {
+            checkboxes.forEach(function(chk) {
+                var fila = chk.parentElement.parentElement;
+                fila.parentElement.removeChild(fila);
+            });
+            guardarTabla();
+        }
+    }
+
+    function abrirMenuExcel(e, colIndex) {
+        e.stopPropagation();
+        columnaActual = colIndex;
+
+        var menu = document.getElementById("menuExcel");
+        var btn = e.target;
+        var rect = btn.getBoundingClientRect();
+
+        menu.style.display = "block";
+        menu.style.top = (rect.bottom + 4) + "px";
+        
+        var leftPos = rect.left - 180;
+        if (leftPos < 10) leftPos = 10;
+        menu.style.left = leftPos + "px";
+
+        poblarCheckboxes(colIndex);
+    }
+
+    function cerrarMenu() {
+        document.getElementById("menuExcel").style.display = "none";
+    }
+
+    function poblarCheckboxes(colIndex) {
+        var tbody = document.getElementById("cuerpoTabla");
+        var valores = new Set();
+
+        for (var i = 0; i < tbody.rows.length; i++) {
+            var val = obtenerValorCelda(tbody.rows[i].cells[colIndex], colIndex);
+            valores.add(val || "(Vacías)");
+        }
+
+        var contenedor = document.getElementById("contenedorCheckboxes");
+        contenedor.innerHTML = "";
+
+        var labelTodo = document.createElement("label");
+        labelTodo.innerHTML = '<input type="checkbox" id="chkTodos" checked onchange="marcarTodos(this)"> <b>(Seleccionar todo)</b>';
+        contenedor.appendChild(labelTodo);
+
+        var seleccionadosPreviamente = filtrosSeleccionados[colIndex];
+
+        valores.forEach(function(val) {
+            var isChecked = !seleccionadosPreviamente || seleccionadosPreviamente.includes(val);
+            var label = document.createElement("label");
+            label.innerHTML = '<input type="checkbox" class="chk-item" value="' + val + '" ' + (isChecked ? 'checked' : '') + '> ' + val;
+            contenedor.appendChild(label);
+        });
+    }
+
+    function marcarTodos(source) {
+        var checkboxes = document.querySelectorAll(".chk-item");
+        checkboxes.forEach(function(chk) { chk.checked = source.checked; });
+    }
+
+    function aplicarFiltrosExcel() {
+        var checkboxes = document.querySelectorAll(".chk-item");
+        var seleccionados = [];
+
+        checkboxes.forEach(function(chk) {
+            if (chk.checked) seleccionados.push(chk.value);
+        });
+
+        filtrosSeleccionados[columnaActual] = seleccionados;
+
+        var tbody = document.getElementById("cuerpoTabla");
+
+        for (var i = 0; i < tbody.rows.length; i++) {
+            var fila = tbody.rows[i];
+            var mostrar = true;
+
+            for (var col = 2; col < 21; col++) {
+                if (filtrosSeleccionados[col]) {
+                    var valCelda = obtenerValorCelda(fila.cells[col], col) || "(Vacías)";
+                    if (!filtrosSeleccionados[col].includes(valCelda)) {
+                        mostrar = false;
+                        break;
+                    }
+                }
+            }
+            fila.style.display = mostrar ? "" : "none";
+        }
+
+        cerrarMenu();
+    }
+
+    function ordenarColumna(direccion) {
+        var tbody = document.getElementById("cuerpoTabla");
+        var filas = Array.from(tbody.rows);
+
+        filas.sort(function(a, b) {
+            var valA = obtenerValorCelda(a.cells[columnaActual], columnaActual).toLowerCase();
+            var valB = obtenerValorCelda(b.cells[columnaActual], columnaActual).toLowerCase();
+
+            if (valA < valB) return direccion === 'ASC' ? -1 : 1;
+            if (valA > valB) return direccion === 'ASC' ? 1 : -1;
+            return 0;
+        });
+
+        filas.forEach(function(fila) { tbody.appendChild(fila); });
+        guardarTabla();
+        cerrarMenu();
+    }
+
+    function limpiarFiltros() {
+        filtrosSeleccionados = {};
+        var tbody = document.getElementById("cuerpoTabla");
+        for (var i = 0; i < tbody.rows.length; i++) {
+            tbody.rows[i].style.display = "";
+        }
+    }
+
+    function agregarFila() {
+        var vistaActual = (document.getElementById("selectorVista") ? document.getElementById("selectorVista").value : "").toLowerCase();
+        if (vistaActual === "anticipos" || vistaActual === "meseros" || vistaActual === "copia_seguridad") {
+            alert("No se permite agregar filas desde esta vista.");
+            return;
+        }
+
+        crearFilaHTML(["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""]);
+        guardarTabla();
+        cambiarVista(vistaActual);
+    }
+
+    function cambiarColor(select) {
+        var celda = select.parentElement;
+        var estilo = obtenerColorStatus(select.value);
+        celda.style.backgroundColor = estilo.bg;
+        select.style.color = estilo.color;
+    }
+
+    function obtenerColorStatus(valor) {
+        if (valor === "Confirmado") return { bg: "#C6EFCE", color: "#006100" };
+        if (valor === "Cancelado")  return { bg: "#FFC7CE", color: "#9C0006" };
+        if (valor === "Terminado")  return { bg: "#E2E8F0", color: "#2B2B2B" };
+        if (valor === "Pendiente")  return { bg: "#FFEB9C", color: "#9C6500" };
+        
+        var esOscuro = document.body.classList.contains("dark-mode");
+        return { 
+            bg: esOscuro ? "#1e293b" : "#FFFFFF", 
+            color: esOscuro ? "#f8fafc" : "#000000" 
+        };
+    }
+
+    function obtenerValorCelda(celda, indice) {
+        if (!celda) return "";
+        if (indice === 4 || indice === 6) {
+            var input = celda.querySelector("input");
+            return input ? input.value : "";
+        } else if (indice === 10 || indice === 11 || indice === 13 || indice === 19 || indice === 20) {
+            var select = celda.querySelector("select");
+            return select ? select.value : "";
+        } else if (indice === 12) {
+            var subinputs = celda.querySelectorAll(".subinput-diferido");
+            if (subinputs.length > 0) {
+                var v1 = subinputs[0].value.trim();
+                var v2 = subinputs[1].value.trim();
+                if (v1 && v2) return v1 + " / " + v2;
+                return v1 || v2 || "";
+            }
+            return celda.innerText.trim();
+        } else {
+            return celda.innerText.trim();
+        }
+    }
+
+    function guardarTabla(alerta) {
+        var vistaActual = (document.getElementById("selectorVista") ? document.getElementById("selectorVista").value : "").toLowerCase();
+        if (vistaActual === "meseros" || vistaActual === "copia_seguridad") return;
+
+        var claveStorage = obtenerClaveUsuario();
+        if (!claveStorage) return;
+
+        var tbody = document.getElementById("cuerpoTabla");
+        var datosGuardar = [];
+
+        for (var i = 0; i < tbody.rows.length; i++) {
+            var fila = tbody.rows[i];
+            var filaData = [];
+
+            for (var j = 2; j < 21; j++) {
+                filaData.push(obtenerValorCelda(fila.cells[j], j));
+            }
+            datosGuardar.push(filaData);
+        }
+
+        localStorage.setItem(claveStorage, JSON.stringify(datosGuardar));
+
+        db.ref(claveStorage).set(datosGuardar)
+            .then(function() {
+                if (alerta === true) {
+                    alert("¡Cambios guardados con éxito en la nube!");
+                }
+            })
+            .catch(function(error) {
+                console.error("Error al guardar en Firebase:", error);
+                if (alerta === true) {
+                    alert("Guardado localmente. Revisa tu conexión a internet.");
+                }
+            });
+    }
+
+    function regresar() {
+        guardarTabla();
+        window.location.href = "index.html";
+    }
+
+    // ===== GUARDADO AUTOMÁTICO Y NAVEGACIÓN MEJORADA CON ENTER =====
+    document.addEventListener('DOMContentLoaded', () => {
+        let temporizadorGuardadoAuto;
+
+        function ejecutarGuardadoAuto() {
+            guardarTabla(false);
+            console.log("✓ Cambios guardados automáticamente");
+        }
+
+        const cuerpoTabla = document.getElementById('cuerpoTabla');
+        if (cuerpoTabla) {
+            // Guardado automático con delay al editar texto o celdas
+            cuerpoTabla.addEventListener('input', () => {
+                clearTimeout(temporizadorGuardadoAuto);
+                temporizadorGuardadoAuto = setTimeout(ejecutarGuardadoAuto, 800);
+            });
+
+            // Guardado inmediato al cambiar opciones en select/desplegables
+            cuerpoTabla.addEventListener('change', () => {
+                clearTimeout(temporizadorGuardadoAuto);
+                ejecutarGuardadoAuto();
+            });
+        }
+
+        // Manejo de la tecla Enter para navegar y crear filas
+        document.body.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const inputs = Array.from(document.querySelectorAll('table input:not([type="checkbox"]):not([disabled]), table select:not([disabled]), table [contenteditable="true"]'))
+                    .filter(el => {
+                        const celda = el.closest('td, th');
+                        return celda && !celda.classList.contains('columna-oculta') && getComputedStyle(celda).display !== 'none';
+                    });
+
+                const currentIndex = inputs.indexOf(e.target);
+
+                if (currentIndex !== -1) {
+                    e.preventDefault();
+
+                    // Si se presiona Enter en el último campo visible de la tabla
+                    if (currentIndex === inputs.length - 1) {
+                        const vistaActual = (document.getElementById("selectorVista") ? document.getElementById("selectorVista").value : "").toLowerCase();
+                        
+                        if (vistaActual !== "anticipos" && vistaActual !== "meseros" && vistaActual !== "copia_seguridad") {
+                            agregarFila();
+                            ejecutarGuardadoAuto();
+
+                            setTimeout(() => {
+                                const nuevosInputs = Array.from(document.querySelectorAll('table input:not([type="checkbox"]):not([disabled]), table select:not([disabled]), table [contenteditable="true"]'))
+                                    .filter(el => {
+                                        const celda = el.closest('td, th');
+                                        return celda && !celda.classList.contains('columna-oculta') && getComputedStyle(celda).display !== 'none';
+                                    });
+                                
+                                const siguienteCampo = nuevosInputs[currentIndex + 1];
+                                if (siguienteCampo) {
+                                    siguienteCampo.focus();
+                                    if (typeof siguienteCampo.select === 'function') {
+                                        siguienteCampo.select();
+                                    }
+                                }
+                            }, 50);
+                        }
+                    } else {
+                        // Pasar al siguiente campo visible
+                        const nextInput = inputs[currentIndex + 1];
+                        if (nextInput) {
+                            nextInput.focus();
+                            if (typeof nextInput.select === 'function') {
+                                nextInput.select();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
     </script>
 
-</head>
-<body> 
+</body>
+</html>
