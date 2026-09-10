@@ -1454,10 +1454,15 @@
                     '</div>';
             }
 
+// Definir el título según el tipo de destinatario
+            var tituloEncabezado = (tipoDestinatario === "equipo") 
+                ? "El Quijote Steak House #" + (index + 1) 
+                : "El Quijote Steak House";
+
             var bloque = document.createElement("div");
             bloque.className = "bloque-tarjeta";
             bloque.innerHTML = 
-                '<h2>Detalle de Reservación #' + (index + 1) + '</h2>' +
+                '<h2>' + tituloEncabezado + '</h2>' +
                 '<div class="item-tarjeta"><span class="etiqueta">Cliente:</span><span class="valor">' + nombre + ' ' + apellido + '</span></div>' +
                 '<div class="item-tarjeta"><span class="etiqueta">Número de personas:</span><span class="valor">' + (personas || "1") + '</span></div>' +
                 '<div class="item-tarjeta"><span class="etiqueta">Día:</span><span class="valor">' + diaFormateado + '</span></div>' +
