@@ -88,7 +88,7 @@
             border-collapse: separate;
             border-spacing: 0;
             width: 100%;
-            min-width: 1700px;
+            min-width: 1850px;
             font-size: 14px;
             background-color: #ffffff;
             transition: background-color 0.3s;
@@ -281,7 +281,7 @@
             background-color: #ffffff;
         }
 
-        input[type="date"], input[type="time"], select.celda-select, select.status-select {
+        input[type="date"], input[type="time"], select.celda-select, select.status-select, select.cliente-select {
             border: none !important;
             background: transparent !important;
             font-family: inherit;
@@ -297,7 +297,7 @@
             -moz-appearance: none;
         }
 
-        select.status-select {
+        select.status-select, select.cliente-select {
             font-weight: bold;
         }
 
@@ -750,7 +750,8 @@
         "Menú", "#phone", "#p", "Área", "Status", 
         "Cantidad Anticipo", "Vía Anticipo", 
         "Comentarios para Cocina", "Comentarios para Meseros", "Comentarios para Barra",
-        "Responsable", "Pin", "Alta Traspasos", "Retorno de anticipo"
+        "Responsable", "Pin", "Alta Traspasos", "Retorno de anticipo",
+        "Cliente", "Notas"
     ];
 
     var columnaActual = null;
@@ -764,9 +765,10 @@
         actualizarTextoBotonTema(esOscuro);
 
         var selectsStatus = document.querySelectorAll("select.status-select");
-        selectsStatus.forEach(function(select) {
-            cambiarColor(select);
-        });
+        selectsStatus.forEach(function(select) { cambiarColor(select); });
+
+        var selectsCliente = document.querySelectorAll("select.cliente-select");
+        selectsCliente.forEach(function(select) { cambiarColorCliente(select); });
     }
 
     function actualizarTextoBotonTema(esOscuro) {
@@ -968,10 +970,10 @@
 
         var ocultarPorVista = {
             "general": [],
-            "copia_seguridad": [],
-            "nueva_reservacion": [19, 20],
-            "anticipos": [7, 14, 15, 16],
-            "meseros": [8, 20]
+            "copia_seguridad": [21, 22],
+            "nueva_reservacion": [18, 19, 20, 21, 22],
+            "anticipos": [7, 14, 15, 16, 21, 22],
+            "meseros": [8, 20, 21, 22]
         };
 
         var columnasAOcultar = ocultarPorVista[vista] || [];
@@ -1190,7 +1192,7 @@
 
         var viaAnticipoInicial = datos ? (datos[11] || "") : "";
 
-        for (var i = 2; i < 21; i++) {
+        for (var i = 2; i < 23; i++) {
             var celda = nuevaFila.insertCell(i);
             var valor = datos ? datos[i - 2] : "";
 
@@ -1307,7 +1309,19 @@
                         '<option value="Realizado"' + (retornoVal === 'Realizado' ? ' selected' : '') + '>Realizado</option>' +
                         '<option value="No requerido"' + (retornoVal === 'No requerido' ? ' selected' : '') + '>No requerido</option>' +
                     '</select>';
-            } else if (i === 14 || i === 15 || i === 16) {
+            } else if (i === 21) {
+                var clienteVal = valor || "";
+                var estiloCliente = obtenerColorCliente(clienteVal);
+                celda.style.backgroundColor = estiloCliente.bg;
+                celda.innerHTML = 
+                    '<select class="cliente-select" style="color:' + estiloCliente.color + ';" onchange="cambiarColorCliente(this); guardarTabla();">' +
+                        '<option value=""' + (clienteVal === '' ? ' selected' : '') + '></option>' +
+                        '<option value="Excelente"' + (clienteVal === 'Excelente' ? ' selected' : '') + '>Excelente</option>' +
+                        '<option value="Bueno"' + (clienteVal === 'Bueno' ? ' selected' : '') + '>Bueno</option>' +
+                        '<option value="Detalles"' + (clienteVal === 'Detalles' ? ' selected' : '') + '>Detalles</option>' +
+                        '<option value="Vetado"' + (clienteVal === 'Vetado' ? ' selected' : '') + '>Vetado</option>' +
+                    '</select>';
+            } else if (i === 14 || i === 15 || i === 16 || i === 22) {
                 celda.contentEditable = "true";
                 celda.innerText = valor || "";
                 celda.onblur = function() { guardarTabla(); };
@@ -1569,7 +1583,7 @@
             var fila = chk.parentElement.parentElement;
             if (fila.style.display !== "none") {
                 var filaData = [];
-                for (var j = 2; j < 21; j++) {
+                for (var j = 2; j < 23; j++) {
                     filaData.push(obtenerValorCelda(fila.cells[j], j));
                 }
                 matriz.push(filaData);
@@ -1814,7 +1828,7 @@
 
         var seleccionadosPreviamente = filtrosSeleccionados[colIndex];
 
-        if (colIndex === 4) { // Columna de Fecha: Estructura de árbol tipo Excel
+        if (colIndex === 4) {
             var arbolFechas = {};
             var vaciasExiste = false;
             var mesesNombres = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
@@ -1884,7 +1898,7 @@
                 contenedor.appendChild(labelVac);
             }
 
-        } else { // Columnas estándar de texto/opción
+        } else {
             var valores = new Set();
             for (var i = 0; i < tbody.rows.length; i++) {
                 var val = obtenerValorCelda(tbody.rows[i].cells[colIndex], colIndex);
@@ -1939,7 +1953,7 @@
             var fila = tbody.rows[i];
             var mostrar = true;
 
-            for (var col = 2; col < 21; col++) {
+            for (var col = 2; col < 23; col++) {
                 if (filtrosSeleccionados[col]) {
                     var valCelda = obtenerValorCelda(fila.cells[col], col) || "(Vacías)";
                     if (!filtrosSeleccionados[col].includes(valCelda)) {
@@ -1987,16 +2001,16 @@
             return;
         }
 
-        crearFilaHTML(["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""]);
+        crearFilaHTML(["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""]);
         
         var tabla = document.getElementById("tablaReservas");
         var filas = tabla.rows;
         var ocultarPorVista = {
             "general": [],
-            "copia_seguridad": [],
-            "nueva_reservacion": [19, 20],
-            "anticipos": [7, 14, 15, 16],
-            "meseros": [8, 20]
+            "copia_seguridad": [21, 22],
+            "nueva_reservacion": [18, 19, 20, 21, 22],
+            "anticipos": [7, 14, 15, 16, 21, 22],
+            "meseros": [8, 20, 21, 22]
         };
         var columnasAOcultar = ocultarPorVista[vistaActual] || [];
 
@@ -2034,12 +2048,32 @@
         };
     }
 
+    function cambiarColorCliente(select) {
+        var celda = select.parentElement;
+        var estilo = obtenerColorCliente(select.value);
+        celda.style.backgroundColor = estilo.bg;
+        select.style.color = estilo.color;
+    }
+
+    function obtenerColorCliente(valor) {
+        if (valor === "Excelente") return { bg: "#C6EFCE", color: "#006100" }; // Verde
+        if (valor === "Bueno")     return { bg: "#FFEB9C", color: "#9C6500" }; // Amarillo
+        if (valor === "Detalles")  return { bg: "#FFE0B2", color: "#E65100" }; // Naranja
+        if (valor === "Vetado")    return { bg: "#FFC7CE", color: "#9C0006" }; // Rojo
+        
+        var esOscuro = document.body.classList.contains("dark-mode");
+        return { 
+            bg: esOscuro ? "#1e293b" : "#FFFFFF", 
+            color: esOscuro ? "#f8fafc" : "#000000" 
+        };
+    }
+
     function obtenerValorCelda(celda, indice) {
         if (!celda) return "";
         if (indice === 4 || indice === 6) {
             var input = celda.querySelector("input");
             return input ? input.value : "";
-        } else if (indice === 10 || indice === 11 || indice === 13 || indice === 19 || indice === 20) {
+        } else if (indice === 10 || indice === 11 || indice === 13 || indice === 19 || indice === 20 || indice === 21) {
             var select = celda.querySelector("select");
             return select ? select.value : "";
         } else if (indice === 12) {
@@ -2077,7 +2111,7 @@
             var fila = tbody.rows[i];
             var filaData = [];
 
-            for (var j = 2; j < 21; j++) {
+            for (var j = 2; j < 23; j++) {
                 filaData.push(obtenerValorCelda(fila.cells[j], j));
             }
             datosGuardar.push(filaData);
