@@ -2056,10 +2056,10 @@
     }
 
     function obtenerColorCliente(valor) {
-        if (valor === "Excelente") return { bg: "#C6EFCE", color: "#006100" }; // Verde
-        if (valor === "Bueno")     return { bg: "#FFEB9C", color: "#9C6500" }; // Amarillo
-        if (valor === "Detalles")  return { bg: "#FFE0B2", color: "#E65100" }; // Naranja
-        if (valor === "Vetado")    return { bg: "#FFC7CE", color: "#9C0006" }; // Rojo
+        if (valor === "Excelente") return { bg: "#C6EFCE", color: "#006100" };
+        if (valor === "Bueno")     return { bg: "#FFEB9C", color: "#9C6500" };
+        if (valor === "Detalles")  return { bg: "#FFE0B2", color: "#E65100" };
+        if (valor === "Vetado")    return { bg: "#FFC7CE", color: "#9C0006" };
         
         var esOscuro = document.body.classList.contains("dark-mode");
         return { 
@@ -2142,6 +2142,15 @@
         let temporizadorGuardadoAuto;
 
         function ejecutarGuardadoAuto() {
+            const elementoActivo = document.activeElement;
+            const estaEditandoTabla = elementoActivo && elementoActivo.closest('table');
+
+            if (estaEditandoTabla) {
+                clearTimeout(temporizadorGuardadoAuto);
+                temporizadorGuardadoAuto = setTimeout(ejecutarGuardadoAuto, 3000);
+                return;
+            }
+
             guardarTabla(false);
             console.log("✓ Cambios guardados automáticamente");
         }
@@ -2150,12 +2159,21 @@
         if (cuerpoTabla) {
             cuerpoTabla.addEventListener('input', () => {
                 clearTimeout(temporizadorGuardadoAuto);
-                temporizadorGuardadoAuto = setTimeout(ejecutarGuardadoAuto, 800);
+                temporizadorGuardadoAuto = setTimeout(ejecutarGuardadoAuto, 3500);
             });
 
             cuerpoTabla.addEventListener('change', () => {
                 clearTimeout(temporizadorGuardadoAuto);
-                ejecutarGuardadoAuto();
+                temporizadorGuardadoAuto = setTimeout(ejecutarGuardadoAuto, 3500);
+            });
+
+            cuerpoTabla.addEventListener('focusout', (e) => {
+                setTimeout(() => {
+                    const elementoActivo = document.activeElement;
+                    if (!elementoActivo || !cuerpoTabla.contains(elementoActivo)) {
+                        guardarTabla(false);
+                    }
+                }, 200);
             });
         }
 
@@ -2177,7 +2195,7 @@
                         
                         if (vistaActual !== "anticipos" && vistaActual !== "meseros" && vistaActual !== "copia_seguridad") {
                             agregarFila();
-                            ejecutarGuardadoAuto();
+                            guardarTabla(false);
 
                             setTimeout(() => {
                                 const nuevosInputs = Array.from(document.querySelectorAll('table input:not([type="checkbox"]):not([disabled]), table select:not([disabled]), table [contenteditable="true"]'))
