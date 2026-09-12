@@ -2261,6 +2261,63 @@
                             if (typeof nextInput.select === 'function') {
                                 nextInput.select();
                             }
+                            // Funciones reales para cambiar y guardar contraseñas en Firebase
+function cambiarContrasenaAcceso() {
+    var nueva = prompt("Introduce la nueva contraseña para Acceso:");
+    if (nueva && nueva.trim() !== "") {
+        contrasenaAcceso = nueva.trim();
+        db.ref("configuracion/contrasenaAcceso").set(contrasenaAcceso)
+            .then(function() {
+                alert("Contraseña de Acceso actualizada y guardada correctamente.");
+            })
+            .catch(function(error) {
+                alert("Error al guardar la contraseña: " + error.message);
+            });
+    }
+}
+
+function cambiarContrasenaGeneral() {
+    var nueva = prompt("Introduce la nueva contraseña para la vista General:");
+    if (nueva && nueva.trim() !== "") {
+        contrasenaGeneral = nueva.trim();
+        db.ref("configuracion/contrasenaGeneral").set(contrasenaGeneral)
+            .then(function() {
+                alert("Contraseña General actualizada y guardada correctamente.");
+            })
+            .catch(function(error) {
+                alert("Error al guardar la contraseña: " + error.message);
+            });
+    }
+}
+
+function cambiarContrasenaSeguridad() {
+    var nueva = prompt("Introduce la nueva contraseña para la vista Seguridad:");
+    if (nueva && nueva.trim() !== "") {
+        contrasenaBackup = nueva.trim();
+        db.ref("configuracion/contrasenaSeguridad").set(contrasenaBackup)
+            .then(function() {
+                alert("Contraseña de Seguridad actualizada y guardada correctamente.");
+            })
+            .catch(function(error) {
+                alert("Error al guardar la contraseña: " + error.message);
+            });
+    }
+}
+
+// Cargar las contraseñas guardadas al iniciar la página
+function cargarContrasenasGuardadas() {
+    db.ref("configuracion").once("value").then(function(snapshot) {
+        var config = snapshot.val();
+        if (config) {
+            if (config.contrasenaAcceso) contrasenaAcceso = config.contrasenaAcceso;
+            if (config.contrasenaGeneral) contrasenaGeneral = config.contrasenaGeneral;
+            if (config.contrasenaSeguridad) contrasenaBackup = config.contrasenaSeguridad;
+        }
+    });
+}
+
+// Llama a esta función al cargar la página
+window.addEventListener("DOMContentLoaded", cargarContrasenasGuardadas);
                         }
                     }
                 }
