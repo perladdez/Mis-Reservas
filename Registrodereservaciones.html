@@ -2304,21 +2304,75 @@ function cambiarContrasenaSeguridad() {
     }
 }
 
-// Cargar las contraseñas guardadas al iniciar la página
+// Cargar las contraseñas inmediatamente desde localStorage y Firebase
 function cargarContrasenasGuardadas() {
-    db.ref("configuracion").once("value").then(function(snapshot) {
-        var config = snapshot.val();
-        if (config) {
-            if (config.contrasenaAcceso) contrasenaAcceso = config.contrasenaAcceso;
-            if (config.contrasenaGeneral) contrasenaGeneral = config.contrasenaGeneral;
-            if (config.contrasenaSeguridad) contrasenaBackup = config.contrasenaSeguridad;
-        }
-    });
+    // 1. Lectura inmediata desde el almacenamiento local
+    var accLocal = localStorage.getItem("contrasenaAcceso");
+    var genLocal = localStorage.getItem("contrasenaGeneral");
+    var segLocal = localStorage.getItem("contrasenaSeguridad");
+
+    if (accLocal) contrasenaAcceso = accLocal;
+    if (genLocal) contrasenaGeneral = genLocal;
+    if (segLocal) contrasenaBackup = segLocal;
+
+    // 2. Sincronización secundaria desde Firebase
+    if (typeof db !== "undefined") {
+        db.ref("configuracion").once("value").then(function(snapshot) {
+            var config = snapshot.val();
+            if (config) {
+                if (config.contrasenaAcceso) {
+                    contrasenaAcceso = config.contrasenaAcceso;
+                    localStorage.setItem("contrasenaAcceso", config.contrasenaAcceso);
+                }
+                if (config.contrasenaGeneral) {
+                    contrasenaGeneral = config.contrasenaGeneral;
+                    localStorage.setItem("contrasenaGeneral", config.contrasenaGeneral);
+                }
+                if (config.contrasenaSeguridad) {
+                    contrasenaBackup = config.contrasenaSeguridad;
+                    localStorage.setItem("contrasenaSeguridad", config.contrasenaSeguridad);
+                }
+            }
+        });
+    }
 }
 
-// Llama a esta función al cargar la página
-window.addEventListener("DOMContentLoaded", cargarContrasenasGuardadas);
-                        }
+// Funciones para guardar en ambos almacenamientos a la vez
+function cambiarContrasenaAcceso() {
+    var nueva = prompt("Introduce la nueva contraseña para Acceso:");
+    if (nueva && nueva.trim() !== "") {
+        var valor = nueva.trim();
+        contrasenaAcceso = valor;
+        localStorage.setItem("contrasenaAcceso", valor);
+        if (typeof db !== "undefined") db.ref("configuracion/contrasenaAcceso").set(valor);
+        alert("Contraseña de Acceso guardada permanentemente.");
+    }
+}
+
+function cambiarContrasenaGeneral() {
+    var nueva = prompt("Introduce la nueva contraseña para la vista General:");
+    if (nueva && nueva.trim() !== "") {
+        var valor = nueva.trim();
+        contrasenaGeneral = valor;
+        localStorage.setItem("contrasenaGeneral", valor);
+        if (typeof db !== "undefined") db.ref("configuracion/contrasenaGeneral").set(valor);
+        alert("Contraseña General guardada permanentemente.");
+    }
+}
+
+function cambiarContrasenaSeguridad() {
+    var nueva = prompt("Introduce la nueva contraseña para la vista Seguridad:");
+    if (nueva && nueva.trim() !== "") {
+        var valor = nueva.trim();
+        contrasenaBackup = valor;
+        localStorage.setItem("contrasenaSeguridad", valor);
+        if (typeof db !== "undefined") db.ref("configuracion/contrasenaSeguridad").set(valor);
+        alert("Contraseña de Seguridad guardada permanentemente.");
+    }
+}
+
+// Iniciar la carga al abrir la pantalla
+cargarContrasenasGuardadas();                        }
                     }
                 }
             }
