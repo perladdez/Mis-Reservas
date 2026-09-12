@@ -803,7 +803,7 @@
             contrasenaAcceso = valor;
             localStorage.setItem("contrasenaAcceso", valor);
             if (typeof db !== "undefined") db.ref("configuracion/contrasenaAcceso").set(valor);
-            alert("Contraseña de Acceso guardada permanentemente.");
+            alert("Contraseña de Acceso actualizada.");
         }
     }
 
@@ -814,7 +814,7 @@
             contrasenaGeneral = valor;
             localStorage.setItem("contrasenaGeneral", valor);
             if (typeof db !== "undefined") db.ref("configuracion/contrasenaGeneral").set(valor);
-            alert("Contraseña General guardada permanentemente.");
+            alert("Contraseña General actualizada.");
         }
     }
 
@@ -825,7 +825,7 @@
             contrasenaBackup = valor;
             localStorage.setItem("contrasenaSeguridad", valor);
             if (typeof db !== "undefined") db.ref("configuracion/contrasenaSeguridad").set(valor);
-            alert("Contraseña de Seguridad guardada permanentemente.");
+            alert("Contraseña de Seguridad actualizada.");
         }
     }
 
