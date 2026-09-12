@@ -765,6 +765,70 @@
     var filtrosSeleccionados = {};
     var sortableInstance = null;
 
+    // Cargar las contraseñas guardadas al iniciar la app
+    function cargarContrasenasGuardadas() {
+        var accLocal = localStorage.getItem("contrasenaAcceso");
+        var genLocal = localStorage.getItem("contrasenaGeneral");
+        var segLocal = localStorage.getItem("contrasenaSeguridad");
+
+        if (accLocal) contrasenaAcceso = accLocal;
+        if (genLocal) contrasenaGeneral = genLocal;
+        if (segLocal) contrasenaBackup = segLocal;
+
+        if (typeof db !== "undefined") {
+            db.ref("configuracion").once("value").then(function(snapshot) {
+                var config = snapshot.val();
+                if (config) {
+                    if (config.contrasenaAcceso) {
+                        contrasenaAcceso = config.contrasenaAcceso;
+                        localStorage.setItem("contrasenaAcceso", config.contrasenaAcceso);
+                    }
+                    if (config.contrasenaGeneral) {
+                        contrasenaGeneral = config.contrasenaGeneral;
+                        localStorage.setItem("contrasenaGeneral", config.contrasenaGeneral);
+                    }
+                    if (config.contrasenaSeguridad) {
+                        contrasenaBackup = config.contrasenaSeguridad;
+                        localStorage.setItem("contrasenaSeguridad", config.contrasenaSeguridad);
+                    }
+                }
+            });
+        }
+    }
+
+    function cambiarContrasenaAcceso() {
+        var nueva = prompt("Introduce la nueva contraseña para Acceso:");
+        if (nueva && nueva.trim() !== "") {
+            var valor = nueva.trim();
+            contrasenaAcceso = valor;
+            localStorage.setItem("contrasenaAcceso", valor);
+            if (typeof db !== "undefined") db.ref("configuracion/contrasenaAcceso").set(valor);
+            alert("Contraseña de Acceso guardada permanentemente.");
+        }
+    }
+
+    function cambiarContrasenaGeneral() {
+        var nueva = prompt("Introduce la nueva contraseña para la vista General:");
+        if (nueva && nueva.trim() !== "") {
+            var valor = nueva.trim();
+            contrasenaGeneral = valor;
+            localStorage.setItem("contrasenaGeneral", valor);
+            if (typeof db !== "undefined") db.ref("configuracion/contrasenaGeneral").set(valor);
+            alert("Contraseña General guardada permanentemente.");
+        }
+    }
+
+    function cambiarContrasenaSeguridad() {
+        var nueva = prompt("Introduce la nueva contraseña para la vista Seguridad:");
+        if (nueva && nueva.trim() !== "") {
+            var valor = nueva.trim();
+            contrasenaBackup = valor;
+            localStorage.setItem("contrasenaSeguridad", valor);
+            if (typeof db !== "undefined") db.ref("configuracion/contrasenaSeguridad").set(valor);
+            alert("Contraseña de Seguridad guardada permanentemente.");
+        }
+    }
+
     function toggleModoOscuro() {
         document.body.classList.toggle("dark-mode");
         var esOscuro = document.body.classList.contains("dark-mode");
@@ -842,6 +906,7 @@
 
     window.onload = function() {
         cargarPreferenciasTema();
+        cargarContrasenasGuardadas();
         
         var usuarioActivo = obtenerUsuarioActual();
         if (!usuarioActivo) return;
@@ -2155,30 +2220,6 @@
         window.location.href = "index.html";
     }
 
-    function cambiarContrasenaAcceso() {
-        var nuevaPass = prompt("Introduce la nueva contraseña de Acceso general:");
-        if (nuevaPass && nuevaPass.trim() !== "") {
-            contrasenaAcceso = nuevaPass.trim();
-            alert("Contraseña de Acceso actualizada con éxito.");
-        }
-    }
-
-    function cambiarContrasenaGeneral() {
-        var nuevaPass = prompt("Introduce la nueva contraseña para la Vista General:");
-        if (nuevaPass && nuevaPass.trim() !== "") {
-            contrasenaGeneral = nuevaPass.trim();
-            alert("Contraseña de Vista General actualizada con éxito.");
-        }
-    }
-
-    function cambiarContrasenaSeguridad() {
-        var nuevaPass = prompt("Introduce la nueva contraseña para la Vista Seguridad:");
-        if (nuevaPass && nuevaPass.trim() !== "") {
-            contrasenaBackup = nuevaPass.trim();
-            alert("Contraseña de Vista Seguridad actualizada con éxito.");
-        }
-    }
-
     document.addEventListener('DOMContentLoaded', () => {
         let temporizadorGuardadoAuto;
 
@@ -2261,118 +2302,7 @@
                             if (typeof nextInput.select === 'function') {
                                 nextInput.select();
                             }
-                            // Funciones reales para cambiar y guardar contraseñas en Firebase
-function cambiarContrasenaAcceso() {
-    var nueva = prompt("Introduce la nueva contraseña para Acceso:");
-    if (nueva && nueva.trim() !== "") {
-        contrasenaAcceso = nueva.trim();
-        db.ref("configuracion/contrasenaAcceso").set(contrasenaAcceso)
-            .then(function() {
-                alert("Contraseña de Acceso actualizada y guardada correctamente.");
-            })
-            .catch(function(error) {
-                alert("Error al guardar la contraseña: " + error.message);
-            });
-    }
-}
-
-function cambiarContrasenaGeneral() {
-    var nueva = prompt("Introduce la nueva contraseña para la vista General:");
-    if (nueva && nueva.trim() !== "") {
-        contrasenaGeneral = nueva.trim();
-        db.ref("configuracion/contrasenaGeneral").set(contrasenaGeneral)
-            .then(function() {
-                alert("Contraseña General actualizada y guardada correctamente.");
-            })
-            .catch(function(error) {
-                alert("Error al guardar la contraseña: " + error.message);
-            });
-    }
-}
-
-function cambiarContrasenaSeguridad() {
-    var nueva = prompt("Introduce la nueva contraseña para la vista Seguridad:");
-    if (nueva && nueva.trim() !== "") {
-        contrasenaBackup = nueva.trim();
-        db.ref("configuracion/contrasenaSeguridad").set(contrasenaBackup)
-            .then(function() {
-                alert("Contraseña de Seguridad actualizada y guardada correctamente.");
-            })
-            .catch(function(error) {
-                alert("Error al guardar la contraseña: " + error.message);
-            });
-    }
-}
-
-// Cargar las contraseñas inmediatamente desde localStorage y Firebase
-function cargarContrasenasGuardadas() {
-    // 1. Lectura inmediata desde el almacenamiento local
-    var accLocal = localStorage.getItem("contrasenaAcceso");
-    var genLocal = localStorage.getItem("contrasenaGeneral");
-    var segLocal = localStorage.getItem("contrasenaSeguridad");
-
-    if (accLocal) contrasenaAcceso = accLocal;
-    if (genLocal) contrasenaGeneral = genLocal;
-    if (segLocal) contrasenaBackup = segLocal;
-
-    // 2. Sincronización secundaria desde Firebase
-    if (typeof db !== "undefined") {
-        db.ref("configuracion").once("value").then(function(snapshot) {
-            var config = snapshot.val();
-            if (config) {
-                if (config.contrasenaAcceso) {
-                    contrasenaAcceso = config.contrasenaAcceso;
-                    localStorage.setItem("contrasenaAcceso", config.contrasenaAcceso);
-                }
-                if (config.contrasenaGeneral) {
-                    contrasenaGeneral = config.contrasenaGeneral;
-                    localStorage.setItem("contrasenaGeneral", config.contrasenaGeneral);
-                }
-                if (config.contrasenaSeguridad) {
-                    contrasenaBackup = config.contrasenaSeguridad;
-                    localStorage.setItem("contrasenaSeguridad", config.contrasenaSeguridad);
-                }
-            }
-        });
-    }
-}
-
-// Funciones para guardar en ambos almacenamientos a la vez
-function cambiarContrasenaAcceso() {
-    var nueva = prompt("Introduce la nueva contraseña para Acceso:");
-    if (nueva && nueva.trim() !== "") {
-        var valor = nueva.trim();
-        contrasenaAcceso = valor;
-        localStorage.setItem("contrasenaAcceso", valor);
-        if (typeof db !== "undefined") db.ref("configuracion/contrasenaAcceso").set(valor);
-        alert("Contraseña de Acceso guardada permanentemente.");
-    }
-}
-
-function cambiarContrasenaGeneral() {
-    var nueva = prompt("Introduce la nueva contraseña para la vista General:");
-    if (nueva && nueva.trim() !== "") {
-        var valor = nueva.trim();
-        contrasenaGeneral = valor;
-        localStorage.setItem("contrasenaGeneral", valor);
-        if (typeof db !== "undefined") db.ref("configuracion/contrasenaGeneral").set(valor);
-        alert("Contraseña General guardada permanentemente.");
-    }
-}
-
-function cambiarContrasenaSeguridad() {
-    var nueva = prompt("Introduce la nueva contraseña para la vista Seguridad:");
-    if (nueva && nueva.trim() !== "") {
-        var valor = nueva.trim();
-        contrasenaBackup = valor;
-        localStorage.setItem("contrasenaSeguridad", valor);
-        if (typeof db !== "undefined") db.ref("configuracion/contrasenaSeguridad").set(valor);
-        alert("Contraseña de Seguridad guardada permanentemente.");
-    }
-}
-
-// Iniciar la carga al abrir la pantalla
-cargarContrasenasGuardadas();                        }
+                        }
                     }
                 }
             }
