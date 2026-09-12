@@ -393,6 +393,7 @@
         .btn-backup { background-color: #6f42c1; }
         .btn-restore { background-color: #d97706; }
         .btn-regresar { background-color: #333; }
+        .btn-pass { background-color: #4b5563; }
 
         #tarjetaVistaPrevia {
             position: absolute;
@@ -707,9 +708,11 @@
         
         <input type="file" id="inputRestaurarJSON" accept=".json" style="display: none;" onchange="procesarRestauracionJSON(event)">
         <button type="button" class="btn-restore" id="btnRestore" onclick="document.getElementById('inputRestaurarJSON').click()">📤 Restaurar (JSON)</button>
-                    <button type="button" class="btn-restore" id="btnRestore" onclick="document.getElementById('inputCambiarContraseña').click()"> Cambiar Contraseña</button>
-                    <button type="button" class="btn-restore" id="btnRestore" onclick="document.getElementById('inputCambiarContraseñaVistaGeneral').click()"> Cambiar Contraseña Vista General</button>
-                    <button type="button" class="btn-restore" id="btnRestore" onclick="document.getElementById('inputCambiarContraseñaVistaSeguridad').click()"> Cambiar Contraseña Vista Seguridad</button>
+        
+        <!-- Botones de Cambio de Contraseña -->
+        <button type="button" class="btn-pass" id="btnPassAcceso" onclick="cambiarContrasenaAcceso()" style="display: none;">🔑 Cambiar Contraseña Acceso</button>
+        <button type="button" class="btn-pass" id="btnPassGeneral" onclick="cambiarContrasenaGeneral()" style="display: none;">🔑 Cambiar Contraseña General</button>
+        <button type="button" class="btn-pass" id="btnPassSeguridad" onclick="cambiarContrasenaSeguridad()" style="display: none;">🔑 Cambiar Contraseña Seguridad</button>
     </div>
 
     <div id="tarjetaVistaPrevia"></div>
@@ -743,6 +746,7 @@
 
     var contrasenaGeneral = "general";
     var contrasenaBackup = "seguridad";
+    var contrasenaAcceso = "1234";
     var vistaAnterior = "nueva_reservacion";
 
     window.sesionGeneralAutenticada = false;
@@ -885,14 +889,24 @@
         var btnLimpiarFiltros = document.getElementById("btnLimpiarFiltros");
         var btnVolverMenu = document.getElementById("btnVolverMenu");
 
+        var btnPassAcceso = document.getElementById("btnPassAcceso");
+        var btnPassGeneral = document.getElementById("btnPassGeneral");
+        var btnPassSeguridad = document.getElementById("btnPassSeguridad");
+
         var vistaActual = (document.getElementById("selectorVista") ? document.getElementById("selectorVista").value : "").toLowerCase();
 
         if (vistaActual === "seguridad") {
             btnBackup.style.display = "inline-block";
             btnRestore.style.display = "inline-block";
+            btnPassAcceso.style.display = "inline-block";
+            btnPassGeneral.style.display = "inline-block";
+            btnPassSeguridad.style.display = "inline-block";
         } else {
             btnBackup.style.display = "none";
             btnRestore.style.display = "none";
+            btnPassAcceso.style.display = "none";
+            btnPassGeneral.style.display = "none";
+            btnPassSeguridad.style.display = "none";
         }
 
         if (vistaActual === "general") {
@@ -2139,6 +2153,30 @@
     function regresar() {
         guardarTabla();
         window.location.href = "index.html";
+    }
+
+    function cambiarContrasenaAcceso() {
+        var nuevaPass = prompt("Introduce la nueva contraseña de Acceso general:");
+        if (nuevaPass && nuevaPass.trim() !== "") {
+            contrasenaAcceso = nuevaPass.trim();
+            alert("Contraseña de Acceso actualizada con éxito.");
+        }
+    }
+
+    function cambiarContrasenaGeneral() {
+        var nuevaPass = prompt("Introduce la nueva contraseña para la Vista General:");
+        if (nuevaPass && nuevaPass.trim() !== "") {
+            contrasenaGeneral = nuevaPass.trim();
+            alert("Contraseña de Vista General actualizada con éxito.");
+        }
+    }
+
+    function cambiarContrasenaSeguridad() {
+        var nuevaPass = prompt("Introduce la nueva contraseña para la Vista Seguridad:");
+        if (nuevaPass && nuevaPass.trim() !== "") {
+            contrasenaBackup = nuevaPass.trim();
+            alert("Contraseña de Vista Seguridad actualizada con éxito.");
+        }
     }
 
     document.addEventListener('DOMContentLoaded', () => {
