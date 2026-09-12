@@ -393,6 +393,7 @@
         .btn-backup { background-color: #6f42c1; }
         .btn-restore { background-color: #d97706; }
         .btn-regresar { background-color: #333; }
+        .btn-pass { background-color: #4b5563; }
 
         #tarjetaVistaPrevia {
             position: absolute;
@@ -657,7 +658,7 @@
             <option value="meseros">Meseros</option>
             <option value="anticipos">Anticipos</option>
             <option value="general">General</option>
-            <option value="copia_seguridad">Copia de seguridad</option>
+            <option value="seguridad">Seguridad</option>
         </select>
         
         <button id="btnModoOscuro" class="btn-toggle-dark" onclick="toggleModoOscuro()">🌙 Modo Oscuro</button>
@@ -707,6 +708,11 @@
         
         <input type="file" id="inputRestaurarJSON" accept=".json" style="display: none;" onchange="procesarRestauracionJSON(event)">
         <button type="button" class="btn-restore" id="btnRestore" onclick="document.getElementById('inputRestaurarJSON').click()">📤 Restaurar (JSON)</button>
+        
+        <!-- Botones de Cambio de Contraseña -->
+        <button type="button" class="btn-pass" id="btnPassAcceso" onclick="cambiarContrasenaAcceso()" style="display: none;">🔑 Cambiar Contraseña Acceso</button>
+        <button type="button" class="btn-pass" id="btnPassGeneral" onclick="cambiarContrasenaGeneral()" style="display: none;">🔑 Cambiar Contraseña General</button>
+        <button type="button" class="btn-pass" id="btnPassSeguridad" onclick="cambiarContrasenaSeguridad()" style="display: none;">🔑 Cambiar Contraseña Seguridad</button>
     </div>
 
     <div id="tarjetaVistaPrevia"></div>
@@ -738,8 +744,9 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    var contrasenaGeneral = "GeneralQ0";
-    var contrasenaBackup = "CopiaQ0";
+    var contrasenaGeneral = "general";
+    var contrasenaBackup = "seguridad";
+    var contrasenaAcceso = "1234";
     var vistaAnterior = "nueva_reservacion";
 
     window.sesionGeneralAutenticada = false;
@@ -882,14 +889,24 @@
         var btnLimpiarFiltros = document.getElementById("btnLimpiarFiltros");
         var btnVolverMenu = document.getElementById("btnVolverMenu");
 
+        var btnPassAcceso = document.getElementById("btnPassAcceso");
+        var btnPassGeneral = document.getElementById("btnPassGeneral");
+        var btnPassSeguridad = document.getElementById("btnPassSeguridad");
+
         var vistaActual = (document.getElementById("selectorVista") ? document.getElementById("selectorVista").value : "").toLowerCase();
 
-        if (vistaActual === "copia_seguridad") {
+        if (vistaActual === "seguridad") {
             btnBackup.style.display = "inline-block";
             btnRestore.style.display = "inline-block";
+            btnPassAcceso.style.display = "inline-block";
+            btnPassGeneral.style.display = "inline-block";
+            btnPassSeguridad.style.display = "inline-block";
         } else {
             btnBackup.style.display = "none";
             btnRestore.style.display = "none";
+            btnPassAcceso.style.display = "none";
+            btnPassGeneral.style.display = "none";
+            btnPassSeguridad.style.display = "none";
         }
 
         if (vistaActual === "general") {
@@ -900,7 +917,7 @@
             btnExportPDF.style.display = "none";
         }
 
-        if (vistaActual === "copia_seguridad") {
+        if (vistaActual === "seguridad") {
             btnAgregar.style.display = "none";
             btnEliminar.style.display = "none";
             btnWA.style.display = "none";
@@ -951,9 +968,9 @@
                 }
                 window.sesionGeneralAutenticada = true;
             }
-        } else if (vista === "copia_seguridad") {
+        } else if (vista === "seguridad") {
             if (!window.sesionBackupAutenticada) {
-                var pass = prompt("Por favor, introduce la contraseña para acceder a la Copia de seguridad:");
+                var pass = prompt("Por favor, introduce la contraseña para acceder:");
                 if (pass !== contrasenaBackup) {
                     alert("Contraseña incorrecta.");
                     selector.value = window.vistaAnterior || "nueva_reservacion";
@@ -970,7 +987,7 @@
 
         var ocultarPorVista = {
             "general": [],
-            "copia_seguridad": [21, 22],
+            "seguridad": [21, 22],
             "nueva_reservacion": [18, 19, 20, 21, 22],
             "anticipos": [7, 14, 15, 16, 21, 22],
             "meseros": [8, 20, 21, 22]
@@ -989,7 +1006,7 @@
             }
         }
 
-        var esModoLectura = (vista === "meseros" || vista === "copia_seguridad");
+        var esModoLectura = (vista === "meseros" || vista === "seguridad");
 
         if (sortableInstance) {
             sortableInstance.option("disabled", esModoLectura || esUsuarioMesero());
@@ -1401,7 +1418,7 @@
 
     function preguntarDestinatarioWA() {
         var vistaActual = (document.getElementById("selectorVista") ? document.getElementById("selectorVista").value : "").toLowerCase();
-        if (esUsuarioMesero() || vistaActual === "nueva_reservacion" || vistaActual === "meseros" || vistaActual === "copia_seguridad") {
+        if (esUsuarioMesero() || vistaActual === "nueva_reservacion" || vistaActual === "meseros" || vistaActual === "seguridad") {
             alert("No tienes permisos autorizados para enviar por WhatsApp.");
             return;
         }
@@ -1752,7 +1769,7 @@
     function eliminarFilasSeleccionadas() {
         var vistaActual = (document.getElementById("selectorVista") ? document.getElementById("selectorVista").value : "").toLowerCase();
         
-        if (esUsuarioMesero() || vistaActual === "nueva_reservacion" || vistaActual === "anticipos" || vistaActual === "meseros" || vistaActual === "copia_seguridad") {
+        if (esUsuarioMesero() || vistaActual === "nueva_reservacion" || vistaActual === "anticipos" || vistaActual === "meseros" || vistaActual === "seguridad") {
             alert("No tienes permisos autorizados para eliminar filas.");
             return;
         }
@@ -1996,7 +2013,7 @@
 
     function agregarFila() {
         var vistaActual = (document.getElementById("selectorVista") ? document.getElementById("selectorVista").value : "").toLowerCase();
-        if (vistaActual === "anticipos" || vistaActual === "meseros" || vistaActual === "copia_seguridad") {
+        if (vistaActual === "anticipos" || vistaActual === "meseros" || vistaActual === "seguridad") {
             alert("No se permite agregar filas desde esta vista.");
             return;
         }
@@ -2007,7 +2024,7 @@
         var filas = tabla.rows;
         var ocultarPorVista = {
             "general": [],
-            "copia_seguridad": [21, 22],
+            "seguridad": [21, 22],
             "nueva_reservacion": [18, 19, 20, 21, 22],
             "anticipos": [7, 14, 15, 16, 21, 22],
             "meseros": [8, 20, 21, 22]
@@ -2099,7 +2116,7 @@
 
     function guardarTabla(alerta) {
         var vistaActual = (document.getElementById("selectorVista") ? document.getElementById("selectorVista").value : "").toLowerCase();
-        if (vistaActual === "meseros" || vistaActual === "copia_seguridad") return;
+        if (vistaActual === "meseros" || vistaActual === "seguridad") return;
 
         var claveStorage = obtenerClaveUsuario();
         if (!claveStorage) return;
@@ -2136,6 +2153,30 @@
     function regresar() {
         guardarTabla();
         window.location.href = "index.html";
+    }
+
+    function cambiarContrasenaAcceso() {
+        var nuevaPass = prompt("Introduce la nueva contraseña de Acceso general:");
+        if (nuevaPass && nuevaPass.trim() !== "") {
+            contrasenaAcceso = nuevaPass.trim();
+            alert("Contraseña de Acceso actualizada con éxito.");
+        }
+    }
+
+    function cambiarContrasenaGeneral() {
+        var nuevaPass = prompt("Introduce la nueva contraseña para la Vista General:");
+        if (nuevaPass && nuevaPass.trim() !== "") {
+            contrasenaGeneral = nuevaPass.trim();
+            alert("Contraseña de Vista General actualizada con éxito.");
+        }
+    }
+
+    function cambiarContrasenaSeguridad() {
+        var nuevaPass = prompt("Introduce la nueva contraseña para la Vista Seguridad:");
+        if (nuevaPass && nuevaPass.trim() !== "") {
+            contrasenaBackup = nuevaPass.trim();
+            alert("Contraseña de Vista Seguridad actualizada con éxito.");
+        }
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -2193,7 +2234,7 @@
                     if (currentIndex === inputs.length - 1) {
                         const vistaActual = (document.getElementById("selectorVista") ? document.getElementById("selectorVista").value : "").toLowerCase();
                         
-                        if (vistaActual !== "anticipos" && vistaActual !== "meseros" && vistaActual !== "copia_seguridad") {
+                        if (vistaActual !== "anticipos" && vistaActual !== "meseros" && vistaActual !== "seguridad") {
                             agregarFila();
                             guardarTabla(false);
 
